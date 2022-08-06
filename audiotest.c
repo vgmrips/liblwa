@@ -193,8 +193,6 @@ int main(int argc, char* argv[])
 			printf("DiskWrt: Dev Init Error: %02X\n", retVal);
 			AudioDrv_Deinit(&audDrvLog);
 		}
-		if (audDrvLog != NULL)
-			AudioDrv_DataForward_Add(audDrv, audDrvLog);
 	}
 	printf("Buffer Size: %u bytes\n", AudioDrv_GetBufferSize(audDrv));
 	
@@ -290,6 +288,8 @@ static UINT32 FillBuffer(void* drvStruct, void* userParam, UINT32 bufSize, void*
 		break;
 	}
 	
+	if (audDrvLog != NULL)
+		AudioDrv_WriteData(audDrvLog, curSmpl * smplSize, data);
 	return curSmpl * smplSize;
 }
 

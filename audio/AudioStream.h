@@ -139,33 +139,6 @@ UINT8 AudioDrv_Resume(void* drvStruct);
  * @return error code. 0 = success, see AERR constants
  */
 UINT8 AudioDrv_SetCallback(void* drvStruct, AUDFUNC_FILLBUF FillBufCallback, void* userParam);
-/**
- * @brief Adds another audio driver instance to data forwarding, so it will receive a copy of all audio data.
- *
- * @note Using Data Forwarding, you can tell the audio system to send a copy of all
- *       data the audio driver receives to one or multiple other drivers.
- *       This can be used e.g. to log all data that is played.
- *
- * @param drvStruct audio driver instance
- * @param destDrvStruct audio driver instance to be added to data forwarding
- * @return error code. 0 = success, see AERR constants
- */
-UINT8 AudioDrv_DataForward_Add(void* drvStruct, const void* destDrvStruct);
-/**
- * @brief Removes an audio driver instance from data forwarding.
- *
- * @param drvStruct audio driver instance
- * @param destDrvStruct audio driver instance to be removed from data forwarding
- * @return error code. 0 = success, see AERR constants
- */
-UINT8 AudioDrv_DataForward_Remove(void* drvStruct, const void* destDrvStruct);
-/**
- * @brief Remove all audio driver instances from data forwarding.
- *
- * @param drvStruct audio driver instance
- * @return error code. 0 = success, see AERR constants
- */
-UINT8 AudioDrv_DataForward_RemoveAll(void* drvStruct);
 
 /**
  * @brief Returns the maximum number of bytes that can be written using AudioDrv_WriteData().

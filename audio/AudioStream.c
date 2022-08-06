@@ -94,22 +94,12 @@ typedef struct _audio_driver_load
 } ADRV_LOAD;
 
 typedef struct _audio_driver_instance ADRV_INSTANCE;
-typedef struct _audio_driver_list ADRV_LIST;
-struct _audio_driver_list
-{
-	const ADRV_INSTANCE* drvInst;
-	ADRV_LIST* next;
-};
 struct _audio_driver_instance
 {
 	UINT32 ID;	// -1 = unused
 	AUDIO_DRV* drvStruct;
 	AUDIO_OPTS drvOpts;
 	void* drvData;
-	void* userParam;
-	AUDFUNC_FILLBUF mainCallback;
-	ADRV_LIST* forwardDrvs;
-	OS_MUTEX* hMutex;	// for locking access to "forwardDrvs"
 };
 
 #define ADFLG_ENABLE	0x01
@@ -118,11 +108,6 @@ struct _audio_driver_instance
 
 #define ADID_UNUSED		(UINT32)-1
 
-
-static UINT8 ADrvLst_Add(ADRV_LIST** headPtr, const ADRV_INSTANCE* drvData);
-static UINT8 ADrvLst_Remove(ADRV_LIST** headPtr, const ADRV_INSTANCE* drvData);
-static ADRV_LIST* ADrvLst_FindItem(ADRV_LIST* head, const ADRV_INSTANCE* drvData, ADRV_LIST** retLastItm);
-static UINT8 ADrvLst_Clear(ADRV_LIST** headPtr);
 
 UINT8 Audio_Init(void);
 //UINT8 Audio_Deinit(void);
@@ -137,11 +122,7 @@ static ADRV_INSTANCE* GetFreeRunSlot(void);
 //UINT8 AudioDrv_Stop(void* drvStruct);
 //UINT8 AudioDrv_Pause(void* drvStruct);
 //UINT8 AudioDrv_Resume(void* drvStruct);
-static UINT32 DoDataForwarding(void* drvStruct, void* userParam, UINT32 bufSize, void* data);
 //UINT8 AudioDrv_SetCallback(void* drvStruct, AUDFUNC_FILLBUF FillBufCallback, void* userParam);
-//UINT8 AudioDrv_DataForward_Add(void* drvStruct, const void* destDrvStruct);
-//UINT8 AudioDrv_DataForward_Remove(void* drvStruct, const void* destDrvStruct);
-//UINT8 AudioDrv_DataForward_RemoveAll(void* drvStruct);
 //UINT32 AudioDrv_GetBufferSize(void* drvStruct);
 //UINT8 AudioDrv_IsBusy(void* drvStruct);
 //UINT8 AudioDrv_WriteData(void* drvStruct, UINT32 dataSize, void* data);
@@ -155,9 +136,6 @@ static UINT32 runDevCount = 0;
 static ADRV_INSTANCE* runDevices = NULL;
 
 static bool isInit = false;
-
-
-#include "AudioStream_LstFuncs.h"
 
 
 UINT8 Audio_Init(void)
@@ -221,7 +199,6 @@ UINT8 Audio_Deinit(void)
 		{
 			tempAIns->drvStruct->Stop(tempAIns->drvData);
 			tempAIns->drvStruct->Destroy(tempAIns->drvData);
-			ADrvLst_Clear(&tempAIns->forwardDrvs);
 		}
 	}
 	for (curDev = 0; curDev < audDrvCount; curDev ++)
@@ -306,11 +283,6 @@ UINT8 AudioDrv_Init(UINT32 drvID, void** retDrvStruct)
 	audInst->drvStruct = tempDrv;
 	audInst->drvOpts = *tempDrv->GetDefOpts();
 	audInst->drvData = drvData;
-	audInst->userParam = NULL;
-	audInst->mainCallback = NULL;
-	audInst->forwardDrvs = NULL;
-	audInst->hMutex = NULL;
-	OSMutex_Init(&audInst->hMutex, 0);
 	*retDrvStruct = (void*)audInst;
 	
 	return AERR_OK;
@@ -340,11 +312,6 @@ UINT8 AudioDrv_Deinit(void** drvStruct)
 	audInst->ID = ADID_UNUSED;
 	audInst->drvStruct = NULL;
 	audInst->drvData = NULL;
-	audInst->userParam = NULL;
-	audInst->mainCallback = NULL;
-	ADrvLst_Clear(&audInst->forwardDrvs);
-	OSMutex_Deinit(audInst->hMutex);
-	audInst->hMutex = NULL;
 	return AERR_OK;
 }
 
@@ -415,105 +382,12 @@ UINT8 AudioDrv_Resume(void* drvStruct)
 	return aDrv->Resume(audInst->drvData);
 }
 
-static UINT32 DoDataForwarding(void* drvStruct, void* userParam, UINT32 bufSize, void* data)
-{
-	ADRV_INSTANCE* audInst = (ADRV_INSTANCE*)drvStruct;
-	ADRV_LIST* fwdList;
-	const ADRV_INSTANCE* fwdInst;
-	UINT32 dataSize;
-	
-	OSMutex_Lock(audInst->hMutex);
-	// Using audInst->userParam instead of the userParam parameter makes
-	// later changes of the userParam via SetCallback work properly.
-	dataSize = audInst->mainCallback(drvStruct, audInst->userParam, bufSize, data);	// fill buffer
-	fwdList = audInst->forwardDrvs;
-	while(fwdList != NULL)
-	{
-		fwdInst = fwdList->drvInst;
-		if (fwdInst->ID != ADID_UNUSED && fwdInst->drvStruct != NULL)
-			fwdInst->drvStruct->WriteData(fwdInst->drvData, dataSize, data);
-		fwdList = fwdList->next;
-	}
-	OSMutex_Unlock(audInst->hMutex);
-	return dataSize;
-}
-
 UINT8 AudioDrv_SetCallback(void* drvStruct, AUDFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	ADRV_INSTANCE* audInst = (ADRV_INSTANCE*)drvStruct;
 	AUDIO_DRV* aDrv = audInst->drvStruct;
-	UINT8 retVal;
 	
-	OSMutex_Lock(audInst->hMutex);
-	audInst->userParam = userParam;
-	audInst->mainCallback = FillBufCallback;
-	if (audInst->forwardDrvs != NULL && audInst->mainCallback != NULL)
-		retVal = aDrv->SetCallback(audInst->drvData, &DoDataForwarding, audInst->userParam);
-	else
-		retVal = aDrv->SetCallback(audInst->drvData, audInst->mainCallback, audInst->userParam);
-	OSMutex_Unlock(audInst->hMutex);
-	return retVal;
-}
-
-UINT8 AudioDrv_DataForward_Add(void* drvStruct, const void* destDrvStruct)
-{
-	ADRV_INSTANCE* audInstSrc = (ADRV_INSTANCE*)drvStruct;
-	ADRV_INSTANCE* audInstDst = (ADRV_INSTANCE*)destDrvStruct;
-	UINT8 retVal;
-	
-	if (audInstDst == NULL)
-		return 0xFF;
-	OSMutex_Lock(audInstSrc->hMutex);
-	retVal = ADrvLst_Add(&audInstSrc->forwardDrvs, audInstDst);
-	// If callbacks are enabled, make it use the Forwarding-Callback routine.
-	if (audInstSrc->drvStruct != NULL && audInstSrc->mainCallback != NULL)
-		audInstSrc->drvStruct->SetCallback(audInstSrc->drvData, &DoDataForwarding, audInstSrc->userParam);
-	OSMutex_Unlock(audInstSrc->hMutex);
-	return AERR_OK;
-}
-
-UINT8 AudioDrv_DataForward_Remove(void* drvStruct, const void* destDrvStruct)
-{
-	ADRV_INSTANCE* audInstSrc = (ADRV_INSTANCE*)drvStruct;
-	ADRV_INSTANCE* audInstDst = (ADRV_INSTANCE*)destDrvStruct;
-	UINT8 retVal;
-	
-	if (audInstDst == NULL)
-		return 0xFF;
-	OSMutex_Lock(audInstSrc->hMutex);
-	retVal = ADrvLst_Remove(&audInstSrc->forwardDrvs, audInstDst);
-	if (retVal)
-	{
-		OSMutex_Unlock(audInstSrc->hMutex);
-		return retVal;
-	}
-	
-	// make it call the original callback function
-	if (audInstSrc->forwardDrvs == NULL && audInstSrc->drvStruct != NULL)
-		audInstSrc->drvStruct->SetCallback(audInstSrc->drvData, audInstSrc->mainCallback, audInstSrc->userParam);
-	OSMutex_Unlock(audInstSrc->hMutex);
-	return AERR_OK;
-}
-
-UINT8 AudioDrv_DataForward_RemoveAll(void* drvStruct)
-{
-	ADRV_INSTANCE* audInst = (ADRV_INSTANCE*)drvStruct;
-	
-	UINT8 retVal;
-	
-	OSMutex_Lock(audInst->hMutex);
-	retVal = ADrvLst_Clear(&audInst->forwardDrvs);
-	if (retVal)
-	{
-		OSMutex_Unlock(audInst->hMutex);
-		return retVal;
-	}
-	
-	// make it call the original callback function
-	if (audInst->drvStruct != NULL)
-		audInst->drvStruct->SetCallback(audInst->drvData, audInst->mainCallback, audInst->userParam);
-	OSMutex_Unlock(audInst->hMutex);
-	return AERR_OK;
+	return aDrv->SetCallback(audInst->drvData, userParam, FillBufCallback);
 }
 
 UINT32 AudioDrv_GetBufferSize(void* drvStruct)
@@ -536,23 +410,8 @@ UINT8 AudioDrv_WriteData(void* drvStruct, UINT32 dataSize, void* data)
 {
 	ADRV_INSTANCE* audInst = (ADRV_INSTANCE*)drvStruct;
 	AUDIO_DRV* aDrv = audInst->drvStruct;
-	ADRV_LIST* fwdList;
-	const ADRV_INSTANCE* fwdInst;
-	UINT8 retVal;
 	
-	retVal = aDrv->WriteData(audInst->drvData, dataSize, data);
-	
-	OSMutex_Lock(audInst->hMutex);
-	fwdList = audInst->forwardDrvs;
-	while(fwdList != NULL)
-	{
-		fwdInst = fwdList->drvInst;
-		if (fwdInst->ID != ADID_UNUSED && fwdInst->drvStruct != NULL)
-			fwdInst->drvStruct->WriteData(audInst->drvData, dataSize, data);
-		fwdList = fwdList->next;
-	}
-	OSMutex_Unlock(audInst->hMutex);
-	return retVal;
+	return aDrv->WriteData(audInst->drvData, dataSize, data);
 }
 
 UINT32 AudioDrv_GetLatency(void* drvStruct)
