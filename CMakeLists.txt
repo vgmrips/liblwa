@@ -1,4 +1,4 @@
-#### libvgm ####
+#### libvgm-audio ####
 cmake_minimum_required(VERSION 3.1)
 if(POLICY CMP0042)
 	cmake_policy(SET CMP0042 NEW)
@@ -104,12 +104,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/sanitizers")
 find_package(Sanitizers)
 
 
-option(BUILD_LIBAUDIO "build audio output library" ON)
-option(BUILD_LIBEMU "build sound emulation library" ON)
-option(BUILD_LIBPLAYER "build player library" ON)
 option(BUILD_TESTS "build test programs" OFF)
-option(BUILD_PLAYER "build player application" ON)
-option(BUILD_VGM2WAV "build sample vgm2wav application" ON)
 set(LIBRARY_TYPE "STATIC" CACHE STRING "library build type (static/shared)")
 set_property(CACHE LIBRARY_TYPE PROPERTY STRINGS "SHARED;STATIC")
 option(USE_SANITIZERS "use sanitizers" ON)
@@ -121,26 +116,10 @@ if(USE_SANITIZERS)
 	add_sanitizers(utils)
 endif(USE_SANITIZERS)
 
-if(BUILD_LIBAUDIO)
-	add_subdirectory(audio)
-	if(USE_SANITIZERS)
-		add_sanitizers(vgm-audio)
-	endif(USE_SANITIZERS)
-endif()
-
-if(BUILD_LIBEMU)
-	add_subdirectory(emu)
-	if(USE_SANITIZERS)
-		add_sanitizers(vgm-emu)
-	endif(USE_SANITIZERS)
-endif()
-
-if(BUILD_LIBPLAYER)
-	add_subdirectory(player)
-	if(USE_SANITIZERS)
-		add_sanitizers(vgm-player)
-	endif(USE_SANITIZERS)
-endif()
+add_subdirectory(audio)
+if(USE_SANITIZERS)
+	add_sanitizers(vgm-audio)
+endif(USE_SANITIZERS)
 
 
 # --- additional stuff ---
@@ -153,51 +132,8 @@ if(USE_SANITIZERS)
 	add_sanitizers(audiotest)
 endif(USE_SANITIZERS)
 
-add_executable(emutest emutest.c)
-target_include_directories(emutest PRIVATE ${LIBVGM_SOURCE_DIR})
-target_link_libraries(emutest PRIVATE vgm-emu)
-if(USE_SANITIZERS)
-	add_sanitizers(emutest)
-endif(USE_SANITIZERS)
-
-add_executable(audemutest audemutest.c)
-target_include_directories(audemutest PRIVATE ${LIBVGM_SOURCE_DIR})
-target_link_libraries(audemutest PRIVATE vgm-audio vgm-emu)
-if(USE_SANITIZERS)
-	add_sanitizers(audemutest)
-endif(USE_SANITIZERS)
-
-find_package(ZLIB REQUIRED)
-
-add_executable(vgmtest vgmtest.c player/dblk_compr.c)
-target_include_directories(vgmtest PRIVATE ${LIBVGM_SOURCE_DIR})
-target_link_libraries(vgmtest PRIVATE ZLIB::ZLIB vgm-audio vgm-emu)
-if(USE_SANITIZERS)
-	add_sanitizers(vgmtest)
-endif(USE_SANITIZERS)
-
-install(TARGETS audiotest emutest audemutest vgmtest DESTINATION "${CMAKE_INSTALL_BINDIR}")
+install(TARGETS audiotest DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif(BUILD_TESTS)
-
-if(BUILD_PLAYER)
-add_executable(player player.cpp player/dblk_compr.c)
-target_include_directories(player PRIVATE ${LIBVGM_SOURCE_DIR})
-target_link_libraries(player PRIVATE vgm-audio vgm-player vgm-utils)
-if(USE_SANITIZERS)
-	add_sanitizers(player)
-endif(USE_SANITIZERS)
-install(TARGETS player DESTINATION "${CMAKE_INSTALL_BINDIR}")
-endif(BUILD_PLAYER)
-
-if(BUILD_VGM2WAV)
-add_executable(vgm2wav vgm2wav.cpp)
-target_include_directories(vgm2wav PRIVATE ${LIBVGM_SOURCE_DIR})
-target_link_libraries(vgm2wav PRIVATE vgm-player vgm-emu vgm-utils)
-if(USE_SANITIZERS)
-	add_sanitizers(vgm2wav)
-endif(USE_SANITIZERS)
-install(TARGETS vgm2wav DESTINATION "${CMAKE_INSTALL_BINDIR}")
-endif(BUILD_VGM2WAV)
 
 set(COMMON_HEADERS
 	common_def.h

@@ -48,35 +48,6 @@ RUN mkdir -p /src/libvgm-build && \
     cmake /src/libvgm && \
     make
 
-# build zlib for win32 and win64
-RUN cd /src && \
-    curl -R -L -O https://zlib.net/zlib-1.2.11.tar.gz && \
-    tar xf zlib-1.2.11.tar.gz && \
-    mkdir /src/zlib-win32 && \
-    cd /src/zlib-win32 && \
-    cmake \
-      -DCMAKE_INSTALL_PREFIX=/opt/i686-w64-mingw32 \
-      -DCMAKE_TOOLCHAIN_FILE=/opt/i686-w64-mingw32.cmake \
-      /src/zlib-1.2.11 && \
-    make && \
-    make install && \
-    mkdir /src/zlib-win64 && \
-    cd /src/zlib-win64 && \
-    cmake \
-      -DCMAKE_INSTALL_PREFIX=/opt/x86_64-w64-mingw32 \
-      -DCMAKE_TOOLCHAIN_FILE=/opt/x86_64-w64-mingw32.cmake \
-      /src/zlib-1.2.11 && \
-    make && \
-    make install && \
-    mv /opt/i686-w64-mingw32/lib/libzlibstatic.a \
-       /opt/i686-w64-mingw32/lib/libz.a && \
-    rm /opt/i686-w64-mingw32/lib/libzlib.dll.a && \
-    rm /opt/i686-w64-mingw32/bin/libzlib.dll && \
-    mv /opt/x86_64-w64-mingw32/lib/libzlibstatic.a \
-       /opt/x86_64-w64-mingw32/lib/libz.a && \
-    rm /opt/x86_64-w64-mingw32/lib/libzlib.dll.a && \
-    rm /opt/x86_64-w64-mingw32/bin/libzlib.dll
-
 # ubuntu 20.04 includes mingw 7.0.0, xaudio2
 # is supported starting with version 8.0.0,
 # disabling xaudio2 until later upgrade of image

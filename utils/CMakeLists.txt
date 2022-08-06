@@ -1,9 +1,7 @@
 #### miscellaneous utility functions/classes ####
 project(vgm-utils)
 
-option(UTIL_LOADERS "build data (file/memory) loaders, requires zlib" ON)
 option(UTIL_THREADING "build threading utilities (thread/mutex/signal)" ON)
-option(UTIL_CHARSET_CONV "build charset conversion functions" ON)
 
 
 set(UTIL_DEFS)
@@ -16,19 +14,6 @@ set(UTIL_DEPS)	# dependencies for CMake Config file
 set(UTIL_PC_CFLAGS)
 set(UTIL_PC_LDFLAGS)
 set(UTIL_PC_PKGS)
-
-
-
-# File Functions
-# --------------
-if(UTIL_LOADERS)
-find_package(ZLIB REQUIRED)
-set(UTIL_DEPS ${UTIL_DEPS} "ZLIB")
-set(UTIL_HEADERS ${UTIL_HEADERS} DataLoader.h FileLoader.h MemoryLoader.h)
-set(UTIL_FILES ${UTIL_FILES} DataLoader.c FileLoader.c MemoryLoader.c)
-set(UTIL_LIBS ${UTIL_LIBS} ZLIB::ZLIB)
-set(UTIL_PC_PKGS ${UTIL_PC_PKGS} "zlib")
-endif(UTIL_LOADERS)
 
 
 
@@ -55,41 +40,6 @@ endif()
 set(UTIL_LIBS ${UTIL_LIBS} Threads::Threads)
 set(UTIL_PC_LDFLAGS ${UTIL_PC_LDFLAGS} ${CMAKE_THREAD_LIBS_INIT})
 endif(UTIL_THREADING)
-
-
-
-# String Codepage Conversion
-# --------------------------
-if(UTIL_CHARSET_CONV)
-find_package(Iconv QUIET)
-if(WIN32)
-	if(${ICONV_FOUND})
-		set(CAN_WINAPI OFF)
-	else()
-		set(CAN_WINAPI ON)
-	endif()
-else()
-	set(CAN_WINAPI OFF)
-endif()
-
-
-option(UTIL_CHARCNV_ICONV "Charset Conversion: iconv" ${ICONV_FOUND})
-option(UTIL_CHARCNV_WINAPI "Charset Conversion: WinAPI" ${CAN_WINAPI})
-
-
-set(UTIL_HEADERS ${UTIL_HEADERS} StrUtils.h)
-if(UTIL_CHARCNV_WINAPI)
-	set(UTIL_FILES ${UTIL_FILES} StrUtils-CPConv_Win.c)
-elseif(UTIL_CHARCNV_ICONV)
-	find_package(Iconv REQUIRED)
-	set(UTIL_DEPS ${UTIL_DEPS} "Iconv")
-	set(UTIL_FILES ${UTIL_FILES} StrUtils-CPConv_IConv.c)
-	set(UTIL_LIBS ${UTIL_LIBS} Iconv::Iconv)
-	if(NOT Iconv_IS_BUILT_IN)
-		set(UTIL_PC_LDFLAGS ${UTIL_PC_LDFLAGS} "-liconv")
-	endif()
-endif()
-endif(UTIL_CHARSET_CONV)
 
 
 
