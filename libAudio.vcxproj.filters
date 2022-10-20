@@ -50,13 +50,13 @@
     <ClCompile Include="audio\AudioStream.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="utils\OSThread_Win.c">
+    <ClCompile Include="utils\lwauThread_Win.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="utils\OSMutex_Win.c">
+    <ClCompile Include="utils\lwauMutex_Win.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="utils\OSSignal_Win.c">
+    <ClCompile Include="utils\lwauSignal_Win.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

@@ -10,9 +10,9 @@
 #include "../stdtype.h"
 
 #include "AudioStream.h"
-#include "../utils/OSThread.h"
-#include "../utils/OSSignal.h"
-#include "../utils/OSMutex.h"
+#include "../utils/lwauThread.h"
+#include "../utils/lwauSignal.h"
+#include "../utils/lwauMutex.h"
 
 
 #ifdef _MSC_VER
@@ -49,13 +49,13 @@ typedef struct _winmm_driver
 	UINT32 bufCount;
 	UINT8* bufSpace;
 	
-	OS_THREAD* hThread;
-	OS_SIGNAL* hSignal;
-	OS_MUTEX* hMutex;
+	LWAU_THREAD* hThread;
+	LWAU_SIGNAL* hSignal;
+	LWAU_MUTEX* hMutex;
 	HWAVEOUT hWaveOut;
 	WAVEHDR* waveHdrs;
 	void* userParam;
-	AUDFUNC_FILLBUF FillBuffer;
+	LWAOFUNC_FILLBUF FillBuffer;
 	
 	UINT32 BlocksSent;
 	UINT32 BlocksPlayed;
@@ -65,17 +65,17 @@ typedef struct _winmm_driver
 UINT8 WinMM_IsAvailable(void);
 UINT8 WinMM_Init(void);
 UINT8 WinMM_Deinit(void);
-const AUDIO_DEV_LIST* WinMM_GetDeviceList(void);
-AUDIO_OPTS* WinMM_GetDefaultOpts(void);
+const LWAO_DEV_LIST* WinMM_GetDeviceList(void);
+LWAO_OPTS* WinMM_GetDefaultOpts(void);
 
 UINT8 WinMM_Create(void** retDrvObj);
 UINT8 WinMM_Destroy(void* drvObj);
-UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam);
+UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
 UINT8 WinMM_Stop(void* drvObj);
 UINT8 WinMM_Pause(void* drvObj);
 UINT8 WinMM_Resume(void* drvObj);
 
-UINT8 WinMM_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT8 WinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
 UINT32 WinMM_GetBufferSize(void* drvObj);
 UINT8 WinMM_IsBusy(void* drvObj);
 UINT8 WinMM_WriteData(void* drvObj, UINT32 dataSize, void* data);
@@ -86,9 +86,9 @@ static void WriteBuffer(DRV_WINMM* drv, WAVEHDR* wHdr);
 static void BufCheck(DRV_WINMM* drv);
 
 
-AUDIO_DRV audDrv_WinMM =
+LWAO_DRIVER lwaoDrv_WinMM =
 {
-	{ADRVTYPE_OUT, ADRVSIG_WINMM, "WinMM"},
+	{LWAO_DTYPE_OUT, LWAO_DSIG_WINMM, "WinMM"},
 	
 	WinMM_IsAvailable,
 	WinMM_Init, WinMM_Deinit,
@@ -105,8 +105,8 @@ AUDIO_DRV audDrv_WinMM =
 };
 
 
-static AUDIO_OPTS defOptions;
-static AUDIO_DEV_LIST deviceList;
+static LWAO_OPTS defOptions;
+static LWAO_DEV_LIST deviceList;
 static UINT* devListIDs;
 
 static UINT8 isInit = 0;
@@ -129,7 +129,7 @@ UINT8 WinMM_Init(void)
 	MMRESULT retValMM;
 	
 	if (isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	numDevs = waveOutGetNumDevs();
 	deviceList.devCount = 1 + numDevs;
@@ -157,7 +157,7 @@ UINT8 WinMM_Init(void)
 	deviceList.devCount = devLstID;
 	
 	
-	memset(&defOptions, 0x00, sizeof(AUDIO_OPTS));
+	memset(&defOptions, 0x00, sizeof(LWAO_OPTS));
 	defOptions.sampleRate = 44100;
 	defOptions.numChannels = 2;
 	defOptions.numBitsPerSmpl = 16;
@@ -168,7 +168,7 @@ UINT8 WinMM_Init(void)
 	activeDrivers = 0;
 	isInit = 1;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WinMM_Deinit(void)
@@ -176,7 +176,7 @@ UINT8 WinMM_Deinit(void)
 	UINT32 curDev;
 	
 	if (! isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	for (curDev = 0; curDev < deviceList.devCount; curDev ++)
 		free(deviceList.devNames[curDev]);
@@ -186,15 +186,15 @@ UINT8 WinMM_Deinit(void)
 	
 	isInit = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
-const AUDIO_DEV_LIST* WinMM_GetDeviceList(void)
+const LWAO_DEV_LIST* WinMM_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-AUDIO_OPTS* WinMM_GetDefaultOpts(void)
+LWAO_OPTS* WinMM_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
@@ -215,17 +215,17 @@ UINT8 WinMM_Create(void** retDrvObj)
 	drv->FillBuffer = NULL;
 	
 	activeDrivers ++;
-	retVal8  = OSSignal_Init(&drv->hSignal, 0);
-	retVal8 |= OSMutex_Init(&drv->hMutex, 0);
+	retVal8  = lwauSignal_Init(&drv->hSignal, 0);
+	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
 		WinMM_Destroy(drv);
 		*retDrvObj = NULL;
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	}
 	*retDrvObj = drv;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WinMM_Destroy(void* drvObj)
@@ -236,21 +236,21 @@ UINT8 WinMM_Destroy(void* drvObj)
 		WinMM_Stop(drvObj);
 	if (drv->hThread != NULL)
 	{
-		OSThread_Cancel(drv->hThread);
-		OSThread_Deinit(drv->hThread);
+		lwauThread_Cancel(drv->hThread);
+		lwauThread_Deinit(drv->hThread);
 	}
 	if (drv->hSignal != NULL)
-		OSSignal_Deinit(drv->hSignal);
+		lwauSignal_Deinit(drv->hSignal);
 	if (drv->hMutex != NULL)
-		OSMutex_Deinit(drv->hMutex);
+		lwauMutex_Deinit(drv->hMutex);
 	
 	free(drv);
 	activeDrivers --;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
-UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam)
+UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	UINT64 tempInt64;
@@ -267,7 +267,7 @@ UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audD
 	if (drv->devState != 0)
 		return 0xD0;	// already running
 	if (deviceID >= deviceList.devCount)
-		return AERR_INVALID_DEV;
+		return LWAO_ERR_INVALID_DEV;
 	
 	drv->audDrvPtr = audDrvParam;
 	if (options == NULL)
@@ -290,8 +290,8 @@ UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audD
 	if (retValMM != MMSYSERR_NOERROR)
 		return 0xC0;		// waveOutOpen failed
 	
-	OSSignal_Reset(drv->hSignal);
-	retVal8 = OSThread_Init(&drv->hThread, &WaveOutThread, drv);
+	lwauSignal_Reset(drv->hSignal);
+	retVal8 = lwauThread_Init(&drv->hThread, &WaveOutThread, drv);
 	if (retVal8)
 	{
 		retValMM = waveOutClose(drv->hWaveOut);
@@ -299,7 +299,7 @@ UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audD
 		return 0xC8;	// CreateThread failed
 	}
 #ifdef NDEBUG
-	hWinThr = *(HANDLE*)OSThread_GetHandle(drv->hThread);
+	hWinThr = *(HANDLE*)lwauThread_GetHandle(drv->hThread);
 	retValB = SetThreadPriority(hWinThr, THREAD_PRIORITY_TIME_CRITICAL);
 	if (! retValB)
 	{
@@ -329,9 +329,9 @@ UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audD
 	drv->BlocksPlayed = 0;
 	
 	drv->devState = 1;
-	OSSignal_Signal(drv->hSignal);
+	lwauSignal_Signal(drv->hSignal);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WinMM_Stop(void* drvObj)
@@ -345,8 +345,8 @@ UINT8 WinMM_Stop(void* drvObj)
 	
 	drv->devState = 2;
 	
-	OSThread_Join(drv->hThread);
-	OSThread_Deinit(drv->hThread);	drv->hThread = NULL;
+	lwauThread_Join(drv->hThread);
+	lwauThread_Deinit(drv->hThread);	drv->hThread = NULL;
 	
 	retValMM = waveOutReset(drv->hWaveOut);
 	for (curBuf = 0; curBuf < drv->bufCount; curBuf ++)
@@ -360,7 +360,7 @@ UINT8 WinMM_Stop(void* drvObj)
 	drv->hWaveOut = NULL;
 	drv->devState = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WinMM_Pause(void* drvObj)
@@ -372,7 +372,7 @@ UINT8 WinMM_Pause(void* drvObj)
 		return 0xFF;
 	
 	retValMM = waveOutPause(drv->hWaveOut);
-	return (retValMM == MMSYSERR_NOERROR) ? AERR_OK : 0xFF;
+	return (retValMM == MMSYSERR_NOERROR) ? LWAO_ERR_OK : 0xFF;
 }
 
 UINT8 WinMM_Resume(void* drvObj)
@@ -384,20 +384,20 @@ UINT8 WinMM_Resume(void* drvObj)
 		return 0xFF;
 	
 	retValMM = waveOutRestart(drv->hWaveOut);
-	return (retValMM == MMSYSERR_NOERROR) ? AERR_OK : 0xFF;
+	return (retValMM == MMSYSERR_NOERROR) ? LWAO_ERR_OK : 0xFF;
 }
 
 
-UINT8 WinMM_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 WinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	
-	OSMutex_Lock(drv->hMutex);
+	lwauMutex_Lock(drv->hMutex);
 	drv->userParam = userParam;
 	drv->FillBuffer = FillBufCallback;
-	OSMutex_Unlock(drv->hMutex);
+	lwauMutex_Unlock(drv->hMutex);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT32 WinMM_GetBufferSize(void* drvObj)
@@ -413,14 +413,14 @@ UINT8 WinMM_IsBusy(void* drvObj)
 	UINT32 curBuf;
 	
 	if (drv->FillBuffer != NULL)
-		return AERR_BAD_MODE;
+		return LWAO_ERR_BAD_MODE;
 	
 	for (curBuf = 0; curBuf < drv->bufCount; curBuf ++)
 	{
 		if (drv->waveHdrs[curBuf].dwFlags & WHDR_DONE)
-			return AERR_OK;
+			return LWAO_ERR_OK;
 	}
-	return AERR_BUSY;
+	return LWAO_ERR_BUSY;
 }
 
 UINT8 WinMM_WriteData(void* drvObj, UINT32 dataSize, void* data)
@@ -430,9 +430,9 @@ UINT8 WinMM_WriteData(void* drvObj, UINT32 dataSize, void* data)
 	WAVEHDR* tempWavHdr;
 	
 	if (dataSize > drv->bufSize)
-		return AERR_TOO_MUCH_DATA;
+		return LWAO_ERR_TOO_MUCH_DATA;
 	
-	OSMutex_Lock(drv->hMutex);
+	lwauMutex_Lock(drv->hMutex);
 	while(1)
 	{
 		for (curBuf = 0; curBuf < drv->bufCount; curBuf ++)
@@ -444,13 +444,13 @@ UINT8 WinMM_WriteData(void* drvObj, UINT32 dataSize, void* data)
 				tempWavHdr->dwBufferLength = dataSize;
 				
 				WriteBuffer(drv, tempWavHdr);
-				OSMutex_Unlock(drv->hMutex);
-				return AERR_OK;
+				lwauMutex_Unlock(drv->hMutex);
+				return LWAO_ERR_OK;
 			}
 		}
 	}
-	OSMutex_Unlock(drv->hMutex);
-	return AERR_BUSY;
+	lwauMutex_Unlock(drv->hMutex);
+	return LWAO_ERR_BUSY;
 }
 
 
@@ -473,12 +473,12 @@ static void WaveOutThread(void* Arg)
 	UINT32 didBuffers;	// number of processed buffers
 	WAVEHDR* tempWavHdr;
 	
-	OSSignal_Wait(drv->hSignal);	// wait until the initialization is done
+	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done
 	
 	while(drv->devState == 1)
 	{
 		didBuffers = 0;
-		OSMutex_Lock(drv->hMutex);
+		lwauMutex_Lock(drv->hMutex);
 		for (curBuf = 0; curBuf < drv->bufCount; curBuf ++)
 		{
 			tempWavHdr = &drv->waveHdrs[curBuf];
@@ -494,7 +494,7 @@ static void WaveOutThread(void* Arg)
 			if (drv->devState > 1)
 				break;
 		}
-		OSMutex_Unlock(drv->hMutex);
+		lwauMutex_Unlock(drv->hMutex);
 		if (! didBuffers)
 			Sleep(1);
 		

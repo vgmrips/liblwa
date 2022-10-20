@@ -163,9 +163,9 @@
     <ClCompile Include="audio\AudDrv_WinMM.c" />
     <ClCompile Include="audio\AudDrv_XAudio2.cpp" />
     <ClCompile Include="audio\AudioStream.c" />
-    <ClCompile Include="utils\OSMutex_Win.c" />
-    <ClCompile Include="utils\OSSignal_Win.c" />
-    <ClCompile Include="utils\OSThread_Win.c" />
+    <ClCompile Include="utils\lwauMutex_Win.c" />
+    <ClCompile Include="utils\lwauSignal_Win.c" />
+    <ClCompile Include="utils\lwauThread_Win.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,22 +8,22 @@
 #include <errno.h>
 
 #include "../stdtype.h"
-#include "OSSignal.h"
+#include "lwauSignal.h"
 
-//typedef struct _os_signal OS_SIGNAL;
-struct _os_signal
+//typedef struct _lwau_signal LWAU_SIGNAL;
+struct _lwau_signal
 {
 	pthread_mutex_t hMutex;
 	pthread_cond_t hCond;	// condition variable
 	UINT8 state;	// signal state
 };
 
-UINT8 OSSignal_Init(OS_SIGNAL** retSignal, UINT8 initState)
+UINT8 lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
 {
-	OS_SIGNAL* sig;
+	LWAU_SIGNAL* sig;
 	int retVal;
 	
-	sig = (OS_SIGNAL*)calloc(1, sizeof(OS_SIGNAL));
+	sig = (LWAU_SIGNAL*)calloc(1, sizeof(LWAU_SIGNAL));
 	if (sig == NULL)
 		return 0xFF;
 	
@@ -46,7 +46,7 @@ UINT8 OSSignal_Init(OS_SIGNAL** retSignal, UINT8 initState)
 	return 0x00;
 }
 
-void OSSignal_Deinit(OS_SIGNAL* sig)
+void lwauSignal_Deinit(LWAU_SIGNAL* sig)
 {
 	pthread_mutex_destroy(&sig->hMutex);
 	pthread_cond_destroy(&sig->hCond);
@@ -56,7 +56,7 @@ void OSSignal_Deinit(OS_SIGNAL* sig)
 	return;
 }
 
-UINT8 OSSignal_Signal(OS_SIGNAL* sig)
+UINT8 lwauSignal_Signal(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	
@@ -71,7 +71,7 @@ UINT8 OSSignal_Signal(OS_SIGNAL* sig)
 	return retVal ? 0xFF : 0x00;
 }
 
-UINT8 OSSignal_Reset(OS_SIGNAL* sig)
+UINT8 lwauSignal_Reset(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	
@@ -85,7 +85,7 @@ UINT8 OSSignal_Reset(OS_SIGNAL* sig)
 	return 0x00;
 }
 
-UINT8 OSSignal_Wait(OS_SIGNAL* sig)
+UINT8 lwauSignal_Wait(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	

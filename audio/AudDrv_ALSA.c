@@ -13,9 +13,9 @@
 #include "../stdtype.h"
 
 #include "AudioStream.h"
-#include "../utils/OSThread.h"
-#include "../utils/OSSignal.h"
-#include "../utils/OSMutex.h"
+#include "../utils/lwauThread.h"
+#include "../utils/lwauSignal.h"
+#include "../utils/lwauMutex.h"
 
 
 typedef struct
@@ -42,32 +42,32 @@ typedef struct _alsa_driver
 	UINT32 bufCount;
 	UINT8* bufSpace;
 	
-	OS_THREAD* hThread;
-	OS_SIGNAL* hSignal;
-	OS_MUTEX* hMutex;
+	LWAU_THREAD* hThread;
+	LWAU_SIGNAL* hSignal;
+	LWAU_MUTEX* hMutex;
 	snd_pcm_t* hPCM;
 	volatile UINT8 pauseThread;
 	UINT8 canPause;
 	
 	void* userParam;
-	AUDFUNC_FILLBUF FillBuffer;
+	LWAOFUNC_FILLBUF FillBuffer;
 } DRV_ALSA;
 
 
 UINT8 ALSA_IsAvailable(void);
 UINT8 ALSA_Init(void);
 UINT8 ALSA_Deinit(void);
-const AUDIO_DEV_LIST* ALSA_GetDeviceList(void);
-AUDIO_OPTS* ALSA_GetDefaultOpts(void);
+const LWAO_DEV_LIST* ALSA_GetDeviceList(void);
+LWAO_OPTS* ALSA_GetDefaultOpts(void);
 
 UINT8 ALSA_Create(void** retDrvObj);
 UINT8 ALSA_Destroy(void* drvObj);
-UINT8 ALSA_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam);
+UINT8 ALSA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
 UINT8 ALSA_Stop(void* drvObj);
 UINT8 ALSA_Pause(void* drvObj);
 UINT8 ALSA_Resume(void* drvObj);
 
-UINT8 ALSA_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT8 ALSA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
 UINT32 ALSA_GetBufferSize(void* drvObj);
 UINT8 ALSA_IsBusy(void* drvObj);
 UINT8 ALSA_WriteData(void* drvObj, UINT32 dataSize, void* data);
@@ -77,9 +77,9 @@ static void AlsaThread(void* Arg);
 static UINT8 WriteBuffer(DRV_ALSA* drv, UINT32 dataSize, void* data);
 
 
-AUDIO_DRV audDrv_ALSA =
+LWAO_DRIVER lwaoDrv_ALSA =
 {
-	{ADRVTYPE_OUT, ADRVSIG_ALSA, "ALSA"},
+	{LWAO_DTYPE_OUT, LWAO_DSIG_ALSA, "ALSA"},
 	
 	ALSA_IsAvailable,
 	ALSA_Init, ALSA_Deinit,
@@ -97,8 +97,8 @@ AUDIO_DRV audDrv_ALSA =
 
 
 static char* alsaDevNames[1] = {"default"};
-static AUDIO_OPTS defOptions;
-static AUDIO_DEV_LIST deviceList;
+static LWAO_OPTS defOptions;
+static LWAO_DEV_LIST deviceList;
 
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
@@ -115,7 +115,7 @@ UINT8 ALSA_Init(void)
 	UINT32 devLstID;
 	
 	if (isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	// TODO: Make device list (like aplay -l)
 	// This will need a LUT for deviceID -> hw:num1,num2.
@@ -123,7 +123,7 @@ UINT8 ALSA_Init(void)
 	deviceList.devNames = alsaDevNames;
 	
 	
-	memset(&defOptions, 0x00, sizeof(AUDIO_OPTS));
+	memset(&defOptions, 0x00, sizeof(LWAO_OPTS));
 	defOptions.sampleRate = 44100;
 	defOptions.numChannels = 2;
 	defOptions.numBitsPerSmpl = 16;
@@ -134,7 +134,7 @@ UINT8 ALSA_Init(void)
 	activeDrivers = 0;
 	isInit = 1;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 ALSA_Deinit(void)
@@ -142,22 +142,22 @@ UINT8 ALSA_Deinit(void)
 	UINT32 curDev;
 	
 	if (! isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	deviceList.devCount = 0;
 	deviceList.devNames = NULL;
 	
 	isInit = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
-const AUDIO_DEV_LIST* ALSA_GetDeviceList(void)
+const LWAO_DEV_LIST* ALSA_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-AUDIO_OPTS* ALSA_GetDefaultOpts(void)
+LWAO_OPTS* ALSA_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
@@ -178,17 +178,17 @@ UINT8 ALSA_Create(void** retDrvObj)
 	drv->FillBuffer = NULL;
 	
 	activeDrivers ++;
-	retVal8  = OSSignal_Init(&drv->hSignal, 0);
-	retVal8 |= OSMutex_Init(&drv->hMutex, 0);
+	retVal8  = lwauSignal_Init(&drv->hSignal, 0);
+	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
 		ALSA_Destroy(drv);
 		*retDrvObj = NULL;
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	}
 	*retDrvObj = drv;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 ALSA_Destroy(void* drvObj)
@@ -199,21 +199,21 @@ UINT8 ALSA_Destroy(void* drvObj)
 		ALSA_Stop(drvObj);
 	if (drv->hThread != NULL)
 	{
-		OSThread_Cancel(drv->hThread);
-		OSThread_Deinit(drv->hThread);
+		lwauThread_Cancel(drv->hThread);
+		lwauThread_Deinit(drv->hThread);
 	}
 	if (drv->hSignal != NULL)
-		OSSignal_Deinit(drv->hSignal);
+		lwauSignal_Deinit(drv->hSignal);
 	if (drv->hMutex != NULL)
-		OSMutex_Deinit(drv->hMutex);
+		lwauMutex_Deinit(drv->hMutex);
 	
 	free(drv);
 	activeDrivers --;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
-UINT8 ALSA_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam)
+UINT8 ALSA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	UINT64 tempInt64;
@@ -297,8 +297,8 @@ UINT8 ALSA_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDr
 		return 0xCF;
 	}
 	
-	OSSignal_Reset(drv->hSignal);
-	retVal8 = OSThread_Init(&drv->hThread, &AlsaThread, drv);
+	lwauSignal_Reset(drv->hSignal);
+	retVal8 = lwauThread_Init(&drv->hThread, &AlsaThread, drv);
 	if (retVal8)
 	{
 		snd_pcm_close(drv->hPCM);	drv->hPCM = NULL;
@@ -310,9 +310,9 @@ UINT8 ALSA_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDr
 	
 	drv->devState = 1;
 	drv->pauseThread = 0x00;
-	OSSignal_Signal(drv->hSignal);
+	lwauSignal_Signal(drv->hSignal);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 ALSA_Stop(void* drvObj)
@@ -325,8 +325,8 @@ UINT8 ALSA_Stop(void* drvObj)
 	
 	drv->devState = 2;
 	
-	OSThread_Join(drv->hThread);
-	OSThread_Deinit(drv->hThread);	drv->hThread = NULL;
+	lwauThread_Join(drv->hThread);
+	lwauThread_Deinit(drv->hThread);	drv->hThread = NULL;
 	
 	if (drv->canPause)
 		retVal = snd_pcm_pause(drv->hPCM, 0);
@@ -341,7 +341,7 @@ UINT8 ALSA_Stop(void* drvObj)
 	
 	drv->devState = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 ALSA_Pause(void* drvObj)
@@ -356,10 +356,10 @@ UINT8 ALSA_Pause(void* drvObj)
 	{
 		retVal = snd_pcm_pause(drv->hPCM, 1);
 		if (retVal < 0)
-			return AERR_API_ERR;
+			return LWAO_ERR_API_ERR;
 	}
 	drv->pauseThread |= 0x01;
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 ALSA_Resume(void* drvObj)
@@ -374,25 +374,25 @@ UINT8 ALSA_Resume(void* drvObj)
 	{
 		retVal = snd_pcm_pause(drv->hPCM, 0);
 		if (retVal < 0)
-			return AERR_API_ERR;
+			return LWAO_ERR_API_ERR;
 	}
 	drv->pauseThread &= ~0x01;
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 
-UINT8 ALSA_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 ALSA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	
 	drv->pauseThread |= 0x02;
-	OSMutex_Lock(drv->hMutex);
+	lwauMutex_Lock(drv->hMutex);
 	drv->userParam = userParam;
 	drv->FillBuffer = FillBufCallback;
 	drv->pauseThread &= ~0x02;
-	OSMutex_Unlock(drv->hMutex);
+	lwauMutex_Unlock(drv->hMutex);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT32 ALSA_GetBufferSize(void* drvObj)
@@ -408,10 +408,10 @@ UINT8 ALSA_IsBusy(void* drvObj)
 	snd_pcm_sframes_t frmCount;
 	
 	if (drv->FillBuffer != NULL)
-		return AERR_BAD_MODE;
+		return LWAO_ERR_BAD_MODE;
 	
 	frmCount = snd_pcm_avail_update(drv->hPCM);
-	return (frmCount > 0) ? AERR_OK : AERR_BUSY;
+	return (frmCount > 0) ? LWAO_ERR_OK : LWAO_ERR_BUSY;
 }
 
 UINT8 ALSA_WriteData(void* drvObj, UINT32 dataSize, void* data)
@@ -420,11 +420,11 @@ UINT8 ALSA_WriteData(void* drvObj, UINT32 dataSize, void* data)
 	UINT8 retVal;
 	
 	if (dataSize > drv->bufSize)
-		return AERR_TOO_MUCH_DATA;
+		return LWAO_ERR_TOO_MUCH_DATA;
 	
-	OSMutex_Lock(drv->hMutex);
+	lwauMutex_Lock(drv->hMutex);
 	retVal = WriteBuffer(drv, dataSize, data);
-	OSMutex_Unlock(drv->hMutex);
+	lwauMutex_Unlock(drv->hMutex);
 	return retVal;
 }
 
@@ -447,7 +447,7 @@ static void AlsaThread(void* Arg)
 	UINT32 bufBytes;
 	int retVal;
 	
-	OSSignal_Wait(drv->hSignal);	// wait until the initialization is done
+	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done
 	
 	while(drv->devState == 1)
 	{
@@ -456,7 +456,7 @@ static void AlsaThread(void* Arg)
 		if (retVal < 0)
 			Sleep(1);	// only wait a bit on errors
 		
-		OSMutex_Lock(drv->hMutex);
+		lwauMutex_Lock(drv->hMutex);
 		if (! drv->pauseThread && drv->FillBuffer != NULL)
 		{
 			// Note: On errors I try to send some data in order to call recovery functions.
@@ -466,7 +466,7 @@ static void AlsaThread(void* Arg)
 				retVal = WriteBuffer(drv, bufBytes, drv->bufSpace);
 			}
 		}
-		OSMutex_Unlock(drv->hMutex);
+		lwauMutex_Unlock(drv->hMutex);
 		
 		while((drv->pauseThread || drv->FillBuffer == NULL) && drv->devState == 1)
 			Sleep(1);
@@ -500,5 +500,5 @@ static UINT8 WriteBuffer(DRV_ALSA* drv, UINT32 dataSize, void* data)
 		snd_pcm_prepare(drv->hPCM);
 	}
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }

@@ -18,9 +18,9 @@
 #include "../stdtype.h"
 
 #include "AudioStream.h"
-#include "../utils/OSThread.h"
-#include "../utils/OSSignal.h"
-#include "../utils/OSMutex.h"
+#include "../utils/lwauThread.h"
+#include "../utils/lwauSignal.h"
+#include "../utils/lwauMutex.h"
 
 
 typedef struct
@@ -56,15 +56,15 @@ typedef struct _oss_driver
 	UINT8* bufSpace;
 	
 #ifdef ENABLE_OSS_THREAD
-	OS_THREAD* hThread;
+	LWAU_THREAD* hThread;
 #endif
-	OS_SIGNAL* hSignal;
-	OS_MUTEX* hMutex;
+	LWAU_SIGNAL* hSignal;
+	LWAU_MUTEX* hMutex;
 	int hFileDSP;
 	volatile UINT8 pauseThread;
 	
 	void* userParam;
-	AUDFUNC_FILLBUF FillBuffer;
+	LWAOFUNC_FILLBUF FillBuffer;
 	OSS_PARAMS ossParams;
 } DRV_OSS;
 
@@ -72,18 +72,18 @@ typedef struct _oss_driver
 UINT8 OSS_IsAvailable(void);
 UINT8 OSS_Init(void);
 UINT8 OSS_Deinit(void);
-const AUDIO_DEV_LIST* OSS_GetDeviceList(void);
-AUDIO_OPTS* OSS_GetDefaultOpts(void);
+const LWAO_DEV_LIST* OSS_GetDeviceList(void);
+LWAO_OPTS* OSS_GetDefaultOpts(void);
 
 UINT8 OSS_Create(void** retDrvObj);
 UINT8 OSS_Destroy(void* drvObj);
 static UINT32 GetNearestBitVal(UINT32 value);
-UINT8 OSS_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam);
+UINT8 OSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
 UINT8 OSS_Stop(void* drvObj);
 UINT8 OSS_Pause(void* drvObj);
 UINT8 OSS_Resume(void* drvObj);
 
-UINT8 OSS_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT8 OSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
 UINT32 OSS_GetBufferSize(void* drvObj);
 UINT8 OSS_IsBusy(void* drvObj);
 UINT8 OSS_WriteData(void* drvObj, UINT32 dataSize, void* data);
@@ -92,9 +92,9 @@ UINT32 OSS_GetLatency(void* drvObj);
 static void OssThread(void* Arg);
 
 
-AUDIO_DRV audDrv_OSS =
+LWAO_DRIVER lwaoDrv_OSS =
 {
-	{ADRVTYPE_OUT, ADRVSIG_OSS, "OSS"},
+	{LWAO_DTYPE_OUT, LWAO_DSIG_OSS, "OSS"},
 	
 	OSS_IsAvailable,
 	OSS_Init, OSS_Deinit,
@@ -112,8 +112,8 @@ AUDIO_DRV audDrv_OSS =
 
 
 static char* ossDevNames[1] = {"/dev/dsp"};
-static AUDIO_OPTS defOptions;
-static AUDIO_DEV_LIST deviceList;
+static LWAO_OPTS defOptions;
+static LWAO_DEV_LIST deviceList;
 
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
@@ -133,13 +133,13 @@ UINT8 OSS_IsAvailable(void)
 UINT8 OSS_Init(void)
 {
 	if (isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	deviceList.devCount = 1;
 	deviceList.devNames = ossDevNames;
 	
 	
-	memset(&defOptions, 0x00, sizeof(AUDIO_OPTS));
+	memset(&defOptions, 0x00, sizeof(LWAO_OPTS));
 	defOptions.sampleRate = 44100;
 	defOptions.numChannels = 2;
 	defOptions.numBitsPerSmpl = 16;
@@ -150,28 +150,28 @@ UINT8 OSS_Init(void)
 	activeDrivers = 0;
 	isInit = 1;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 OSS_Deinit(void)
 {
 	if (! isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	deviceList.devCount = 0;
 	deviceList.devNames = NULL;
 	
 	isInit = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
-const AUDIO_DEV_LIST* OSS_GetDeviceList(void)
+const LWAO_DEV_LIST* OSS_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-AUDIO_OPTS* OSS_GetDefaultOpts(void)
+LWAO_OPTS* OSS_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
@@ -194,17 +194,17 @@ UINT8 OSS_Create(void** retDrvObj)
 	drv->FillBuffer = NULL;
 	
 	activeDrivers ++;
-	retVal8  = OSSignal_Init(&drv->hSignal, 0);
-	retVal8 |= OSMutex_Init(&drv->hMutex, 0);
+	retVal8  = lwauSignal_Init(&drv->hSignal, 0);
+	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
 		OSS_Destroy(drv);
 		*retDrvObj = NULL;
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	}
 	*retDrvObj = drv;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 OSS_Destroy(void* drvObj)
@@ -216,19 +216,19 @@ UINT8 OSS_Destroy(void* drvObj)
 #ifdef ENABLE_OSS_THREAD
 	if (drv->hThread != NULL)
 	{
-		OSThread_Cancel(drv->hThread);
-		OSThread_Deinit(drv->hThread);
+		lwauThread_Cancel(drv->hThread);
+		lwauThread_Deinit(drv->hThread);
 	}
 #endif
 	if (drv->hSignal != NULL)
-		OSSignal_Deinit(drv->hSignal);
+		lwauSignal_Deinit(drv->hSignal);
 	if (drv->hMutex != NULL)
-		OSMutex_Deinit(drv->hMutex);
+		lwauMutex_Deinit(drv->hMutex);
 	
 	free(drv);
 	activeDrivers --;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 static UINT32 GetNearestBitVal(UINT32 value)
@@ -250,7 +250,7 @@ static UINT32 GetNearestBitVal(UINT32 value)
 	return 0;
 }
 
-UINT8 OSS_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam)
+UINT8 OSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	UINT64 tempInt64;
@@ -323,9 +323,9 @@ UINT8 OSS_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrv
 	if (retVal)
 		printf("Error setting Sample Rate!\n");
 	
-	OSSignal_Reset(drv->hSignal);
+	lwauSignal_Reset(drv->hSignal);
 #ifdef ENABLE_OSS_THREAD
-	retVal8 = OSThread_Init(&drv->hThread, &OssThread, drv);
+	retVal8 = lwauThread_Init(&drv->hThread, &OssThread, drv);
 	if (retVal8)
 	{
 		retVal = close(drv->hFileDSP);
@@ -338,9 +338,9 @@ UINT8 OSS_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrv
 	
 	drv->devState = 1;
 	drv->pauseThread = 0x00;
-	OSSignal_Signal(drv->hSignal);
+	lwauSignal_Signal(drv->hSignal);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 OSS_Stop(void* drvObj)
@@ -354,8 +354,8 @@ UINT8 OSS_Stop(void* drvObj)
 	drv->devState = 2;
 	
 #ifdef ENABLE_OSS_THREAD
-	OSThread_Join(drv->hThread);
-	OSThread_Deinit(drv->hThread);	drv->hThread = NULL;
+	lwauThread_Join(drv->hThread);
+	lwauThread_Deinit(drv->hThread);	drv->hThread = NULL;
 #endif
 	
 	free(drv->bufSpace);	drv->bufSpace = NULL;
@@ -366,7 +366,7 @@ UINT8 OSS_Stop(void* drvObj)
 	drv->hFileDSP = 0;
 	drv->devState = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 OSS_Pause(void* drvObj)
@@ -377,7 +377,7 @@ UINT8 OSS_Pause(void* drvObj)
 		return 0xFF;
 	
 	drv->pauseThread |= 0x01;
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 OSS_Resume(void* drvObj)
@@ -388,25 +388,25 @@ UINT8 OSS_Resume(void* drvObj)
 		return 0xFF;
 	
 	drv->pauseThread &= ~0x01;
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 
-UINT8 OSS_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 OSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
 #ifdef ENABLE_OSS_THREAD
 	drv->pauseThread |= 0x02;
-	OSMutex_Lock(drv->hMutex);
+	lwauMutex_Lock(drv->hMutex);
 	drv->userParam = userParam;
 	drv->FillBuffer = FillBufCallback;
 	drv->pauseThread &= ~0x02;
-	OSMutex_Unlock(drv->hMutex);
+	lwauMutex_Unlock(drv->hMutex);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 #else
-	return AERR_NO_SUPPORT;
+	return LWAO_ERR_NO_SUPPORT;
 #endif
 }
 
@@ -422,10 +422,10 @@ UINT8 OSS_IsBusy(void* drvObj)
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
 	if (drv->FillBuffer != NULL)
-		return AERR_BAD_MODE;
+		return LWAO_ERR_BAD_MODE;
 	
-	//return AERR_BUSY;
-	return AERR_OK;
+	//return LWAO_ERR_BUSY;
+	return LWAO_ERR_OK;
 }
 
 UINT8 OSS_WriteData(void* drvObj, UINT32 dataSize, void* data)
@@ -434,12 +434,12 @@ UINT8 OSS_WriteData(void* drvObj, UINT32 dataSize, void* data)
 	ssize_t wrtBytes;
 	
 	if (dataSize > drv->bufSize)
-		return AERR_TOO_MUCH_DATA;
+		return LWAO_ERR_TOO_MUCH_DATA;
 	
 	wrtBytes = write(drv->hFileDSP, data, dataSize);
 	if (wrtBytes == -1)
 		return 0xFF;
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 
@@ -463,19 +463,19 @@ static void OssThread(void* Arg)
 	UINT32 bufBytes;
 	ssize_t wrtBytes;
 	
-	OSSignal_Wait(drv->hSignal);	// wait until the initialization is done
+	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done
 	
 	while(drv->devState == 1)
 	{
 		didBuffers = 0;
-		OSMutex_Lock(drv->hMutex);
+		lwauMutex_Lock(drv->hMutex);
 		if (! drv->pauseThread && drv->FillBuffer != NULL)
 		{
 			bufBytes = drv->FillBuffer(drv->audDrvPtr, drv->userParam, drv->bufSize, drv->bufSpace);
 			wrtBytes = write(drv->hFileDSP, drv->bufSpace, bufBytes);
 			didBuffers ++;
 		}
-		OSMutex_Unlock(drv->hMutex);
+		lwauMutex_Unlock(drv->hMutex);
 		if (! didBuffers)
 			Sleep(1);
 		

@@ -7,31 +7,31 @@
 #include <windows.h>
 
 #include "../stdtype.h"
-#include "OSThread.h"
+#include "lwauThread.h"
 
-//typedef struct _os_thread OS_THREAD;
-struct _os_thread
+//typedef struct _lwau_thread LWAU_THREAD;
+struct _lwau_thread
 {
 	DWORD id;
 	HANDLE hThread;
-	OS_THR_FUNC func;
+	LWAU_THR_FUNC func;
 	void* args;
 };
 
-static DWORD WINAPI OSThread_Main(LPVOID lpParam);
+static DWORD WINAPI lwauThread_Main(LPVOID lpParam);
 
-UINT8 OSThread_Init(OS_THREAD** retThread, OS_THR_FUNC threadFunc, void* args)
+UINT8 lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args)
 {
-	OS_THREAD* thr;
+	LWAU_THREAD* thr;
 	
-	thr = (OS_THREAD*)calloc(1, sizeof(OS_THREAD));
+	thr = (LWAU_THREAD*)calloc(1, sizeof(LWAU_THREAD));
 	if (thr == NULL)
 		return 0xFF;
 	
 	thr->func = threadFunc;
 	thr->args = args;
 	
-	thr->hThread = CreateThread(NULL, 0, &OSThread_Main, thr, 0x00, &thr->id);
+	thr->hThread = CreateThread(NULL, 0, &lwauThread_Main, thr, 0x00, &thr->id);
 	if (thr->hThread == NULL)
 	{
 		free(thr);
@@ -42,14 +42,14 @@ UINT8 OSThread_Init(OS_THREAD** retThread, OS_THR_FUNC threadFunc, void* args)
 	return 0x00;
 }
 
-static DWORD WINAPI OSThread_Main(LPVOID lpParam)
+static DWORD WINAPI lwauThread_Main(LPVOID lpParam)
 {
-	OS_THREAD* thr = (OS_THREAD*)lpParam;
+	LWAU_THREAD* thr = (LWAU_THREAD*)lpParam;
 	thr->func(thr->args);
 	return 0;
 }
 
-void OSThread_Deinit(OS_THREAD* thr)
+void lwauThread_Deinit(LWAU_THREAD* thr)
 {
 	CloseHandle(thr->hThread);
 	free(thr);
@@ -57,7 +57,7 @@ void OSThread_Deinit(OS_THREAD* thr)
 	return;
 }
 
-void OSThread_Join(OS_THREAD* thr)
+void lwauThread_Join(LWAU_THREAD* thr)
 {
 	if (! thr->id)
 		return;
@@ -68,7 +68,7 @@ void OSThread_Join(OS_THREAD* thr)
 	return;
 }
 
-void OSThread_Cancel(OS_THREAD* thr)
+void lwauThread_Cancel(LWAU_THREAD* thr)
 {
 	BOOL retVal;
 	
@@ -82,12 +82,12 @@ void OSThread_Cancel(OS_THREAD* thr)
 	return;
 }
 
-UINT64 OSThread_GetID(const OS_THREAD* thr)
+UINT64 lwauThread_GetID(const LWAU_THREAD* thr)
 {
 	return thr->id;
 }
 
-void* OSThread_GetHandle(OS_THREAD* thr)
+void* lwauThread_GetHandle(LWAU_THREAD* thr)
 {
 	return &thr->hThread;
 }

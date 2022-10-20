@@ -22,7 +22,7 @@ int __cdecl _getch(void);	// from conio.h
 
 
 int main(int argc, char* argv[]);
-#ifdef AUDDRV_DSOUND
+#ifdef LWAO_DRIVER_DSOUND
 static void SetupDirectSound(void* audDrv);
 #endif
 static UINT32 FillBuffer(void* drvStruct, void* userParam, UINT32 bufSize, void* Data);
@@ -49,13 +49,13 @@ int main(int argc, char* argv[])
 	UINT32 idWavOut;
 	UINT32 idWavOutDev;
 	UINT32 idWavWrt;
-	AUDDRV_INFO* drvInfo;
-	AUDIO_OPTS* opts;
-	AUDIO_OPTS* optsLog;
-	const AUDIO_DEV_LIST* devList;
+	LWAO_DINFO* drvInfo;
+	LWAO_OPTS* opts;
+	LWAO_OPTS* optsLog;
+	const LWAO_DEV_LIST* devList;
 	
-	Audio_Init();
-	drvCount = Audio_GetDriverCount();
+	lwaoInit();
+	drvCount = lwaoGetDriverCount();
 	if (! drvCount)
 		goto Exit_Deinit;
 	
@@ -65,10 +65,10 @@ int main(int argc, char* argv[])
 	idWavWrt = (UINT32)-1;
 	for (curDrv = 0; curDrv < drvCount; curDrv ++)
 	{
-		Audio_GetDriverInfo(curDrv, &drvInfo);
-		if (drvInfo->drvType == ADRVTYPE_OUT /*&& idWavOut == (UINT32)-1*/)
+		lwaoGetDriverInfo(curDrv, &drvInfo);
+		if (drvInfo->drvType == LWAO_DTYPE_OUT /*&& idWavOut == (UINT32)-1*/)
 			idWavOut = curDrv;
-		else if (drvInfo->drvType == ADRVTYPE_DISK && idWavWrt == (UINT32)-1)
+		else if (drvInfo->drvType == LWAO_DTYPE_DISK && idWavWrt == (UINT32)-1)
 			idWavWrt = curDrv;
 	}
 	if (idWavOut == (UINT32)-1)
@@ -81,13 +81,13 @@ int main(int argc, char* argv[])
 	printf("Available Drivers:\n");
 	for (curDrv = 0; curDrv < drvCount; curDrv ++)
 	{
-		Audio_GetDriverInfo(curDrv, &drvInfo);
+		lwaoGetDriverInfo(curDrv, &drvInfo);
 		printf("    Driver %u: Type: %02X, Sig: %02X, Name: %s\n",
 				curDrv, drvInfo->drvType, drvInfo->drvSig, drvInfo->drvName);
 	}
 	if (argc <= 1)
 	{
-		Audio_Deinit();
+		lwaoDeinit();
 		printf("Usage:\n");
 		printf("audiotest DriverID [DeviceID] [WaveLogDriverID]\n");
 		return 0;
@@ -105,26 +105,26 @@ int main(int argc, char* argv[])
 	if (idWavOut >= drvCount)
 		idWavOut = drvCount - 1;
 	
-	Audio_GetDriverInfo(idWavOut, &drvInfo);
+	lwaoGetDriverInfo(idWavOut, &drvInfo);
 	printf("Using driver %s.\n", drvInfo->drvName);
-	retVal = AudioDrv_Init(idWavOut, &audDrv);
+	retVal = lwaodInit(idWavOut, &audDrv);
 	if (retVal)
 	{
 		printf("WaveOut: Drv Init Error: %02X\n", retVal);
 		goto Exit_Deinit;
 	}
 
-#ifdef AUDDRV_PULSE
-	if (drvInfo->drvSig == ADRVSIG_PULSE)
+#ifdef LWAO_DRIVER_PULSE
+	if (drvInfo->drvSig == LWAO_DSIG_PULSE)
 	{
 		void* pulseDrv;
-		pulseDrv = AudioDrv_GetDrvData(audDrv);
+		pulseDrv = lwaodGetDrvData(audDrv);
 		Pulse_SetStreamDesc(pulseDrv, "audiotest");
 	}
 #endif
 
-#ifdef AUDDRV_DSOUND
-	if (drvInfo->drvSig == ADRVSIG_DSOUND)
+#ifdef LWAO_DRIVER_DSOUND
+	if (drvInfo->drvSig == LWAO_DSIG_DSOUND)
 		SetupDirectSound(audDrv);
 #endif
 	
@@ -134,10 +134,8 @@ int main(int argc, char* argv[])
 	}
 	else
 	{
-		void* aDrv;
-		
-		Audio_GetDriverInfo(idWavWrt, &drvInfo);
-		retVal = AudioDrv_Init(idWavWrt, &audDrvLog);
+		lwaoGetDriverInfo(idWavWrt, &drvInfo);
+		retVal = lwaodInit(idWavWrt, &audDrvLog);
 		if (retVal)
 		{
 			printf("DiskWrt: Drv Init Error: %02X\n", retVal);
@@ -145,40 +143,40 @@ int main(int argc, char* argv[])
 		}
 		if (audDrvLog != NULL)
 		{
-			if (drvInfo->drvSig == ADRVSIG_WAVEWRT)
+			if (drvInfo->drvSig == LWAO_DSIG_WAVEWRT)
 			{
-#ifdef AUDDRV_WAVEWRITE
-				aDrv = AudioDrv_GetDrvData(audDrvLog);
+#ifdef LWAO_DRIVER_WAVEWRITE
+				void* aDrv = lwaodGetDrvData(audDrvLog);
 				WavWrt_SetFileName(aDrv, "waveOut.wav");
 #endif
 			}
-			else if (drvInfo->drvSig == ADRVSIG_DSOUND)
+			else if (drvInfo->drvSig == LWAO_DSIG_DSOUND)
 			{
-#ifdef AUDDRV_DSOUND
+#ifdef LWAO_DRIVER_DSOUND
 				SetupDirectSound(audDrvLog);
 #endif
 			}
 		}
 	}
 	
-	opts = AudioDrv_GetOptions(audDrv);
+	opts = lwaodGetOptions(audDrv);
 	opts->numChannels = 1;
 	opts->numBitsPerSmpl = 16;
 	smplSize = opts->numChannels * opts->numBitsPerSmpl / 8;
 	if (audDrvLog != NULL)
 	{
-		optsLog = AudioDrv_GetOptions(audDrvLog);
+		optsLog = lwaodGetOptions(audDrvLog);
 		*optsLog = *opts;
 	}
 	
-	devList = AudioDrv_GetDeviceList(audDrv);
+	devList = lwaodGetDeviceList(audDrv);
 	printf("%u device%s found.\n", devList->devCount, (devList->devCount == 1) ? "" : "s");
 	for (curDrv = 0; curDrv < devList->devCount; curDrv ++)
 		printf("    Device %u: %s\n", curDrv, devList->devNames[curDrv]);
 	
-	AudioDrv_SetCallback(audDrv, FillBuffer, NULL);
+	lwaodSetCallback(audDrv, FillBuffer, NULL);
 	printf("Opening Device %u ...\n", idWavOutDev);
-	retVal = AudioDrv_Start(audDrv, idWavOutDev);
+	retVal = lwaodStart(audDrv, idWavOutDev);
 	if (retVal)
 	{
 		printf("Dev Init Error: %02X\n", retVal);
@@ -187,39 +185,39 @@ int main(int argc, char* argv[])
 	
 	if (audDrvLog != NULL)
 	{
-		retVal = AudioDrv_Start(audDrvLog, 0);
+		retVal = lwaodStart(audDrvLog, 0);
 		if (retVal)
 		{
 			printf("DiskWrt: Dev Init Error: %02X\n", retVal);
-			AudioDrv_Deinit(&audDrvLog);
+			lwaodDeinit(&audDrvLog);
 		}
 	}
-	printf("Buffer Size: %u bytes\n", AudioDrv_GetBufferSize(audDrv));
+	printf("Buffer Size: %u bytes\n", lwaodGetBufferSize(audDrv));
 	
 	while(1)
 	{
 		int inkey = getchar();
 		if (toupper(inkey) == 'P')
-			AudioDrv_Pause(audDrv);
+			lwaodPause(audDrv);
 		else if (toupper(inkey) == 'R')
-			AudioDrv_Resume(audDrv);
+			lwaodResume(audDrv);
 		else
 			break;
 		while(getchar() != '\n')
 			;
 	}
-	printf("Current Latency: %u ms\n", AudioDrv_GetLatency(audDrv));
+	printf("Current Latency: %u ms\n", lwaodGetLatency(audDrv));
 	
-	retVal = AudioDrv_Stop(audDrv);
+	retVal = lwaodStop(audDrv);
 	if (audDrvLog != NULL)
-		retVal = AudioDrv_Stop(audDrvLog);
+		retVal = lwaodStop(audDrvLog);
 	
 Exit_DrvDeinit:
-	AudioDrv_Deinit(&audDrv);
+	lwaodDeinit(&audDrv);
 	if (audDrvLog != NULL)
-		AudioDrv_Deinit(&audDrvLog);
+		lwaodDeinit(&audDrvLog);
 Exit_Deinit:
-	Audio_Deinit();
+	lwaoDeinit();
 	printf("Done.\n");
 	
 #if defined(_DEBUG) && (_MSC_VER >= 1400)
@@ -289,18 +287,18 @@ static UINT32 FillBuffer(void* drvStruct, void* userParam, UINT32 bufSize, void*
 	}
 	
 	if (audDrvLog != NULL)
-		AudioDrv_WriteData(audDrvLog, curSmpl * smplSize, data);
+		lwaodWriteData(audDrvLog, curSmpl * smplSize, data);
 	return curSmpl * smplSize;
 }
 
-#ifdef AUDDRV_DSOUND
+#ifdef LWAO_DRIVER_DSOUND
 static void SetupDirectSound(void* audDrv)
 {
 #ifdef _WIN32
 	void* aDrv;
 	HWND hWndConsole;
 	
-	aDrv = AudioDrv_GetDrvData(audDrv);
+	aDrv = lwaodGetDrvData(audDrv);
 #if _WIN32_WINNT >= 0x500
 	hWndConsole = GetConsoleWindow();
 #else

@@ -21,9 +21,9 @@
 #include "../stdtype.h"
 
 #include "AudioStream.h"
-#include "../utils/OSThread.h"
-#include "../utils/OSSignal.h"
-#include "../utils/OSMutex.h"
+#include "../utils/lwauThread.h"
+#include "../utils/lwauSignal.h"
+#include "../utils/lwauMutex.h"
 
 #define EXT_C	extern "C"
 
@@ -44,11 +44,11 @@ typedef struct _wasapi_driver
 	IAudioClient* audClnt;
 	IAudioRenderClient* rendClnt;
 	
-	OS_THREAD* hThread;
-	OS_SIGNAL* hSignal;
-	OS_MUTEX* hMutex;
+	LWAU_THREAD* hThread;
+	LWAU_SIGNAL* hSignal;
+	LWAU_MUTEX* hMutex;
 	void* userParam;
-	AUDFUNC_FILLBUF FillBuffer;
+	LWAOFUNC_FILLBUF FillBuffer;
 	
 	UINT32 bufFrmCount;
 } DRV_WASAPI;
@@ -57,17 +57,17 @@ typedef struct _wasapi_driver
 EXT_C UINT8 WASAPI_IsAvailable(void);
 EXT_C UINT8 WASAPI_Init(void);
 EXT_C UINT8 WASAPI_Deinit(void);
-EXT_C const AUDIO_DEV_LIST* WASAPI_GetDeviceList(void);
-EXT_C AUDIO_OPTS* WASAPI_GetDefaultOpts(void);
+EXT_C const LWAO_DEV_LIST* WASAPI_GetDeviceList(void);
+EXT_C LWAO_OPTS* WASAPI_GetDefaultOpts(void);
 
 EXT_C UINT8 WASAPI_Create(void** retDrvObj);
 EXT_C UINT8 WASAPI_Destroy(void* drvObj);
-EXT_C UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam);
+EXT_C UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
 EXT_C UINT8 WASAPI_Stop(void* drvObj);
 EXT_C UINT8 WASAPI_Pause(void* drvObj);
 EXT_C UINT8 WASAPI_Resume(void* drvObj);
 
-EXT_C UINT8 WASAPI_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam);
+EXT_C UINT8 WASAPI_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
 EXT_C UINT32 WASAPI_GetBufferSize(void* drvObj);
 static UINT32 GetFreeSamples(DRV_WASAPI* drv);
 EXT_C UINT8 WASAPI_IsBusy(void* drvObj);
@@ -79,9 +79,9 @@ static void WasapiThread(void* Arg);
 
 extern "C"
 {
-AUDIO_DRV audDrv_WASAPI =
+LWAO_DRIVER lwaoDrv_WASAPI =
 {
-	{ADRVTYPE_OUT, ADRVSIG_WASAPI, "WASAPI"},
+	{LWAO_DTYPE_OUT, LWAO_DSIG_WASAPI, "WASAPI"},
 	
 	WASAPI_IsAvailable,
 	WASAPI_Init, WASAPI_Deinit,
@@ -105,8 +105,8 @@ static const IID IID_IAudioClient = __uuidof(IAudioClient);
 static const IID IID_IAudioRenderClient = __uuidof(IAudioRenderClient);
 
 
-static AUDIO_OPTS defOptions;
-static AUDIO_DEV_LIST deviceList;
+static LWAO_OPTS defOptions;
+static LWAO_DEV_LIST deviceList;
 static wchar_t** devListIDs;
 
 static UINT8 isInit = 0;
@@ -153,7 +153,7 @@ UINT8 WASAPI_Init(void)
 	WAVEFORMATEXTENSIBLE* mixFmtX;
 	
 	if (isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	deviceList.devCount = 0;
 	deviceList.devNames = NULL;
@@ -161,19 +161,19 @@ UINT8 WASAPI_Init(void)
 	
 	retVal = CoInitializeEx(NULL, COINIT_MULTITHREADED);
 	if (! (retVal == S_OK || retVal == S_FALSE))
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	
 	retVal = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL,
 								IID_IMMDeviceEnumerator, (void**)&devEnum);
 	if (retVal != S_OK)
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	retVal = devEnum->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &devList);
 	if (retVal != S_OK)
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	
 	retVal = devList->GetCount(&devCount);
 	if (retVal != S_OK)
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	
 	deviceList.devCount = 1 + devCount;
 	deviceList.devNames = (char**)malloc(deviceList.devCount * sizeof(char*));
@@ -217,7 +217,7 @@ UINT8 WASAPI_Init(void)
 	deviceList.devCount = devLstID;
 	devList->Release();	devList = NULL;
 	
-	memset(&defOptions, 0x00, sizeof(AUDIO_OPTS));
+	memset(&defOptions, 0x00, sizeof(LWAO_OPTS));
 	defOptions.sampleRate = 44100;
 	defOptions.numChannels = 2;
 	defOptions.numBitsPerSmpl = 16;
@@ -257,7 +257,7 @@ UINT8 WASAPI_Init(void)
 	activeDrivers = 0;
 	isInit = 1;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WASAPI_Deinit(void)
@@ -265,7 +265,7 @@ UINT8 WASAPI_Deinit(void)
 	UINT32 curDev;
 	
 	if (! isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	for (curDev = 0; curDev < deviceList.devCount; curDev ++)
 	{
@@ -279,15 +279,15 @@ UINT8 WASAPI_Deinit(void)
 	CoUninitialize();
 	isInit = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
-const AUDIO_DEV_LIST* WASAPI_GetDeviceList(void)
+const LWAO_DEV_LIST* WASAPI_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-AUDIO_OPTS* WASAPI_GetDefaultOpts(void)
+LWAO_OPTS* WASAPI_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
@@ -312,17 +312,17 @@ UINT8 WASAPI_Create(void** retDrvObj)
 	drv->FillBuffer = NULL;
 	
 	activeDrivers ++;
-	retVal8  = OSSignal_Init(&drv->hSignal, 0);
-	retVal8 |= OSMutex_Init(&drv->hMutex, 0);
+	retVal8  = lwauSignal_Init(&drv->hSignal, 0);
+	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
 		WASAPI_Destroy(drv);
 		*retDrvObj = NULL;
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	}
 	*retDrvObj = drv;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WASAPI_Destroy(void* drvObj)
@@ -333,21 +333,21 @@ UINT8 WASAPI_Destroy(void* drvObj)
 		WASAPI_Stop(drvObj);
 	if (drv->hThread != NULL)
 	{
-		OSThread_Cancel(drv->hThread);
-		OSThread_Deinit(drv->hThread);
+		lwauThread_Cancel(drv->hThread);
+		lwauThread_Deinit(drv->hThread);
 	}
 	if (drv->hSignal != NULL)
-		OSSignal_Deinit(drv->hSignal);
+		lwauSignal_Deinit(drv->hSignal);
 	if (drv->hMutex != NULL)
-		OSMutex_Deinit(drv->hMutex);
+		lwauMutex_Deinit(drv->hMutex);
 	
 	free(drv);
 	activeDrivers --;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
-UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam)
+UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	UINT64 tempInt64;
@@ -363,7 +363,7 @@ UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* aud
 	if (drv->devState != 0)
 		return 0xD0;	// already running
 	if (deviceID >= deviceList.devCount)
-		return AERR_INVALID_DEV;
+		return LWAO_ERR_INVALID_DEV;
 	
 	drv->audDrvPtr = audDrvParam;
 	if (options == NULL)
@@ -386,14 +386,14 @@ UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* aud
 	
 	retVal = CoInitializeEx(NULL, COINIT_MULTITHREADED);	// call again, in case Init() was called by another thread
 	if (! (retVal == S_OK || retVal == S_FALSE))
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	
 	retVal = CoCreateInstance(CLSID_MMDeviceEnumerator, NULL, CLSCTX_ALL,
 								IID_IMMDeviceEnumerator, (void**)&drv->devEnum);
 	if (retVal != S_OK)
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	
-	errVal = AERR_API_ERR;
+	errVal = LWAO_ERR_API_ERR;
 	if (devListIDs[deviceID] == NULL)
 		retVal = drv->devEnum->GetDefaultAudioEndpoint(eRender, eConsole, &drv->audDev);
 	else
@@ -417,15 +417,15 @@ UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* aud
 	if (retVal != S_OK)
 		goto StartErr_HasAudClient;
 	
-	OSSignal_Reset(drv->hSignal);
-	retVal8 = OSThread_Init(&drv->hThread, &WasapiThread, drv);
+	lwauSignal_Reset(drv->hSignal);
+	retVal8 = lwauThread_Init(&drv->hThread, &WasapiThread, drv);
 	if (retVal8)
 	{
 		errVal = 0xC8;	// CreateThread failed
 		goto StartErr_HasRendClient;
 	}
 #ifdef NDEBUG
-	hWinThr = *(HANDLE*)OSThread_GetHandle(drv->hThread);
+	hWinThr = *(HANDLE*)lwauThread_GetHandle(drv->hThread);
 	retValB = SetThreadPriority(hWinThr, THREAD_PRIORITY_TIME_CRITICAL);
 	if (! retValB)
 	{
@@ -438,9 +438,9 @@ UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* aud
 	retVal = drv->audClnt->Start();
 	
 	drv->devState = 1;
-	OSSignal_Signal(drv->hSignal);
+	lwauSignal_Signal(drv->hSignal);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 
 StartErr_HasRendClient:
 	drv->rendClnt->Release();	drv->rendClnt = NULL;
@@ -466,8 +466,8 @@ UINT8 WASAPI_Stop(void* drvObj)
 	if (drv->audClnt != NULL)
 		retVal = drv->audClnt->Stop();
 	
-	OSThread_Join(drv->hThread);
-	OSThread_Deinit(drv->hThread);	drv->hThread = NULL;
+	lwauThread_Join(drv->hThread);
+	lwauThread_Deinit(drv->hThread);	drv->hThread = NULL;
 	
 	drv->rendClnt->Release();	drv->rendClnt = NULL;
 	drv->audClnt->Release();	drv->audClnt = NULL;
@@ -477,7 +477,7 @@ UINT8 WASAPI_Stop(void* drvObj)
 	CoUninitialize();
 	drv->devState = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WASAPI_Pause(void* drvObj)
@@ -489,7 +489,7 @@ UINT8 WASAPI_Pause(void* drvObj)
 		return 0xFF;
 	
 	retVal = drv->audClnt->Stop();
-	return (retVal == S_OK || retVal == S_FALSE) ? AERR_OK : 0xFF;
+	return (retVal == S_OK || retVal == S_FALSE) ? LWAO_ERR_OK : 0xFF;
 }
 
 UINT8 WASAPI_Resume(void* drvObj)
@@ -501,20 +501,20 @@ UINT8 WASAPI_Resume(void* drvObj)
 		return 0xFF;
 	
 	retVal = drv->audClnt->Start();
-	return (retVal == S_OK || retVal == S_FALSE) ? AERR_OK : 0xFF;
+	return (retVal == S_OK || retVal == S_FALSE) ? LWAO_ERR_OK : 0xFF;
 }
 
 
-UINT8 WASAPI_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 WASAPI_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	
-	OSMutex_Lock(drv->hMutex);
+	lwauMutex_Lock(drv->hMutex);
 	drv->userParam = userParam;
 	drv->FillBuffer = FillBufCallback;
-	OSMutex_Unlock(drv->hMutex);
+	lwauMutex_Unlock(drv->hMutex);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT32 WASAPI_GetBufferSize(void* drvObj)
@@ -542,10 +542,10 @@ UINT8 WASAPI_IsBusy(void* drvObj)
 	UINT32 freeSmpls;
 	
 	if (drv->FillBuffer != NULL)
-		return AERR_BAD_MODE;
+		return LWAO_ERR_BAD_MODE;
 	
 	freeSmpls = GetFreeSamples(drv);
-	return (freeSmpls >= drv->bufSmpls) ? AERR_OK : AERR_BUSY;
+	return (freeSmpls >= drv->bufSmpls) ? LWAO_ERR_OK : LWAO_ERR_BUSY;
 }
 
 UINT8 WASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data)
@@ -556,7 +556,7 @@ UINT8 WASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data)
 	BYTE* bufData;
 	
 	if (dataSize > drv->bufSize)
-		return AERR_TOO_MUCH_DATA;
+		return LWAO_ERR_TOO_MUCH_DATA;
 	
 	dataSmpls = dataSize / drv->waveFmt.nBlockAlign;
 	while(GetFreeSamples(drv) < dataSmpls)
@@ -564,13 +564,13 @@ UINT8 WASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data)
 	
 	retVal = drv->rendClnt->GetBuffer(dataSmpls, &bufData);
 	if (retVal != S_OK)
-		return AERR_API_ERR;
+		return LWAO_ERR_API_ERR;
 	
 	memcpy(bufData, data, dataSize);
 	
 	retVal = drv->rendClnt->ReleaseBuffer(dataSmpls, 0x00);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 
@@ -596,13 +596,13 @@ static void WasapiThread(void* Arg)
 	HRESULT retVal;
 	BYTE* bufData;
 	
-	OSSignal_Wait(drv->hSignal);	// wait until the initialization is done
+	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done
 	
 	while(drv->devState == 1)
 	{
 		didBuffers = 0;
 		
-		OSMutex_Lock(drv->hMutex);
+		lwauMutex_Lock(drv->hMutex);
 		while(GetFreeSamples(drv) >= drv->bufSmpls && drv->FillBuffer != NULL)
 		{
 			retVal = drv->rendClnt->GetBuffer(drv->bufSmpls, &bufData);
@@ -615,7 +615,7 @@ static void WasapiThread(void* Arg)
 				didBuffers ++;
 			}
 		}
-		OSMutex_Unlock(drv->hMutex);
+		lwauMutex_Unlock(drv->hMutex);
 		if (! didBuffers)
 			Sleep(1);
 		

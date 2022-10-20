@@ -1,4 +1,4 @@
-#### libvgm-audio ####
+#### liblwa-output ####
 cmake_minimum_required(VERSION 3.1)
 if(POLICY CMP0042)
 	cmake_policy(SET CMP0042 NEW)
@@ -10,7 +10,7 @@ if(POLICY CMP0074)
 	cmake_policy(SET CMP0074 NEW)
 endif()
 
-project(libvgmMain VERSION 0.1 LANGUAGES C CXX)
+project(lwa VERSION 0.1 LANGUAGES C CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/libs/cmake_modules/")
 
@@ -18,12 +18,12 @@ include(GNUInstallDirs)
 include(CheckIncludeFile)
 include("${PROJECT_SOURCE_DIR}/cmake/utils.cmake")
 
-set(LIBVGM_NAME "libvgm")	# for use in subdirectories
-set(LIBVGM_VERSION ${PROJECT_VERSION})	# for use in subdirectories
-set(LIBVGM_SOURCE_DIR ${PROJECT_SOURCE_DIR})	# for use in subdirectories
-set(LIBVGM_INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/vgm")
-set(LIBVGM_INSTALL_TARGETS)	# will be filled in by sub-projects
-set(LIBVGM_DEPS)	# will be filled in by sub-projects
+set(LIBLWA_NAME ${PROJECT_NAME})	# for use in subdirectories
+set(LIBLWA_VERSION ${PROJECT_VERSION})	# for use in subdirectories
+set(LIBLWA_SOURCE_DIR ${PROJECT_SOURCE_DIR})	# for use in subdirectories
+set(LIBLWA_INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/vgm")
+set(LIBLWA_INSTALL_TARGETS)	# will be filled in by sub-projects
+set(LIBLWA_DEPS)	# will be filled in by sub-projects
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
@@ -49,10 +49,6 @@ if(MSVC)
 	set(CMAKE_MINSIZEREL_POSTFIX "_${MSVC_POSTFIX}${CMAKE_MINSIZEREL_POSTFIX}")
 	set(CMAKE_RELWITHDEBINFO_POSTFIX "_${MSVC_POSTFIX}${CMAKE_RELWITHDEBINFO_POSTFIX}")
 	
-	set(ZLIB_ROOT "${PROJECT_SOURCE_DIR}/libs" CACHE PATH "ZLib directory")
-	set(Iconv_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/iconv/include" CACHE PATH "directory with iconv headers")
-	set(Iconv_LIBRARY "${PROJECT_SOURCE_DIR}/libs/iconv/lib/libiconv.lib" CACHE FILEPATH "iconv library")
-	
 	if(NOT MSVC_VERSION LESS 1400)
 		# Note: CMake 3.12 and up have add_compile_options()
 		add_definitions("-D _CRT_SECURE_NO_WARNINGS")
@@ -63,7 +59,7 @@ if(MINGW)
 	option(LINK_STATIC_LIBS "link with static runtime libraries (MinGW only)" ON)
 	if(LINK_STATIC_LIBS)
 		set(CMAKE_FIND_LIBRARY_SUFFIXES .a ${CMAKE_FIND_LIBRARY_SUFFIXES})
-		set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ -lwsock32 -lws2_32 ${CMAKE_CXX_STANDARD_LIBRARIES}")
+		set(CMAKE_CXX_STANDARD_LIBRARIES "-static-libgcc -static-libstdc++ ${CMAKE_CXX_STANDARD_LIBRARIES}")
 		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive")
 	endif()
 else()
@@ -84,9 +80,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-unused-parameter -Wno-unused-but-set-variable -Wno-long-long -Wno-unused-value")
 
 # silence typical sound core warnings
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-unknown-pragmas")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-sign-compare")
-set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-unused-variable -Wno-unused-const-variable -Wno-unused-function")
+#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-unknown-pragmas")
+#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-sign-compare")
+#set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -Wno-unused-variable -Wno-unused-const-variable -Wno-unused-function")
 
 # additional warnings from http://blog.httrack.com/blog/2014/03/09/what-are-your-gcc-flags/
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wpointer-arith -Winit-self -Wstrict-aliasing")
@@ -104,7 +100,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/sanitizers")
 find_package(Sanitizers)
 
 
-option(BUILD_TESTS "build test programs" OFF)
+option(BUILD_EXAMPLES "build example programs" OFF)
 set(LIBRARY_TYPE "STATIC" CACHE STRING "library build type (static/shared)")
 set_property(CACHE LIBRARY_TYPE PROPERTY STRINGS "SHARED;STATIC")
 option(USE_SANITIZERS "use sanitizers" ON)
@@ -118,22 +114,22 @@ endif(USE_SANITIZERS)
 
 add_subdirectory(audio)
 if(USE_SANITIZERS)
-	add_sanitizers(vgm-audio)
+	add_sanitizers(lwa-output)
 endif(USE_SANITIZERS)
 
 
 # --- additional stuff ---
-if(BUILD_TESTS)
+if(BUILD_EXAMPLES)
 
 add_executable(audiotest audiotest.c)
-target_include_directories(audiotest PRIVATE ${LIBVGM_SOURCE_DIR})
-target_link_libraries(audiotest PRIVATE vgm-audio)
+target_include_directories(audiotest PRIVATE ${LIBLWA_SOURCE_DIR})
+target_link_libraries(audiotest PRIVATE lwa-output)
 if(USE_SANITIZERS)
 	add_sanitizers(audiotest)
 endif(USE_SANITIZERS)
 
 install(TARGETS audiotest DESTINATION "${CMAKE_INSTALL_BINDIR}")
-endif(BUILD_TESTS)
+endif(BUILD_EXAMPLES)
 
 set(COMMON_HEADERS
 	common_def.h
@@ -141,10 +137,10 @@ set(COMMON_HEADERS
 	stdtype.h
 )
 
-install(FILES ${COMMON_HEADERS} DESTINATION "${LIBVGM_INSTALL_INCLUDE_DIR}")
-cmake_cfg_install("${LIBVGM_SOURCE_DIR}/cmake/config.cmake.in"
-	NAME "${LIBVGM_NAME}"
-	VERSION "${LIBVGM_VERSION}"
-	TARGETS "${LIBVGM_INSTALL_TARGETS}"
-	DEPS "${LIBVGM_DEPS}"
+install(FILES ${COMMON_HEADERS} DESTINATION "${LIBLWA_INSTALL_INCLUDE_DIR}")
+cmake_cfg_install("${LIBLWA_SOURCE_DIR}/cmake/config.cmake.in"
+	NAME "${LIBLWA_NAME}"
+	VERSION "${LIBLWA_VERSION}"
+	TARGETS "${LIBLWA_INSTALL_TARGETS}"
+	DEPS "${LIBLWA_DEPS}"
 	)

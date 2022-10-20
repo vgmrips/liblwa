@@ -46,19 +46,19 @@ typedef struct _wave_writer_driver
 UINT8 WavWrt_IsAvailable(void);
 UINT8 WavWrt_Init(void);
 UINT8 WavWrt_Deinit(void);
-const AUDIO_DEV_LIST* WavWrt_GetDeviceList(void);
-AUDIO_OPTS* WavWrt_GetDefaultOpts(void);
+const LWAO_DEV_LIST* WavWrt_GetDeviceList(void);
+LWAO_OPTS* WavWrt_GetDefaultOpts(void);
 
 UINT8 WavWrt_Create(void** retDrvObj);
 UINT8 WavWrt_Destroy(void* drvObj);
 UINT8 WavWrt_SetFileName(void* drvObj, const char* fileName);
 const char* WavWrt_GetFileName(void* drvObj);
 
-UINT8 WavWrt_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam);
+UINT8 WavWrt_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
 UINT8 WavWrt_Stop(void* drvObj);
 UINT8 WavWrt_PauseResume(void* drvObj);
 
-UINT8 WavWrt_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT8 WavWrt_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
 UINT32 WavWrt_GetBufferSize(void* drvObj);
 UINT8 WavWrt_IsBusy(void* drvObj);
 UINT8 WavWrt_WriteData(void* drvObj, UINT32 dataSize, void* data);
@@ -69,9 +69,9 @@ INLINE size_t fputLE32(UINT32 Value, FILE* hFile);
 INLINE size_t fputBE32(UINT32 Value, FILE* hFile);
 
 
-AUDIO_DRV audDrv_WaveWrt =
+LWAO_DRIVER lwaoDrv_WaveWrt =
 {
-	{ADRVTYPE_DISK, ADRVSIG_WAVEWRT, "WaveWrite"},
+	{LWAO_DTYPE_DISK, LWAO_DSIG_WAVEWRT, "WaveWrite"},
 	
 	WavWrt_IsAvailable,
 	WavWrt_Init, WavWrt_Deinit,
@@ -89,8 +89,8 @@ AUDIO_DRV audDrv_WaveWrt =
 
 
 static char* wavOutDevNames[1] = {"Wave Writer"};
-static AUDIO_OPTS defOptions;
-static AUDIO_DEV_LIST deviceList;
+static LWAO_OPTS defOptions;
+static LWAO_DEV_LIST deviceList;
 
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
@@ -103,13 +103,13 @@ UINT8 WavWrt_IsAvailable(void)
 UINT8 WavWrt_Init(void)
 {
 	if (isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	deviceList.devCount = 1;
 	deviceList.devNames = wavOutDevNames;
 	
 	
-	memset(&defOptions, 0x00, sizeof(AUDIO_OPTS));
+	memset(&defOptions, 0x00, sizeof(LWAO_OPTS));
 	defOptions.sampleRate = 44100;
 	defOptions.numChannels = 2;
 	defOptions.numBitsPerSmpl = 16;
@@ -120,28 +120,28 @@ UINT8 WavWrt_Init(void)
 	activeDrivers = 0;
 	isInit = 1;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WavWrt_Deinit(void)
 {
 	if (! isInit)
-		return AERR_WASDONE;
+		return LWAO_ERR_WASDONE;
 	
 	deviceList.devCount = 0;
 	deviceList.devNames = NULL;
 	
 	isInit = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
-const AUDIO_DEV_LIST* WavWrt_GetDeviceList(void)
+const LWAO_DEV_LIST* WavWrt_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-AUDIO_OPTS* WavWrt_GetDefaultOpts(void)
+LWAO_OPTS* WavWrt_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
@@ -159,7 +159,7 @@ UINT8 WavWrt_Create(void** retDrvObj)
 	activeDrivers ++;
 	*retDrvObj = drv;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WavWrt_Destroy(void* drvObj)
@@ -175,7 +175,7 @@ UINT8 WavWrt_Destroy(void* drvObj)
 	free(drv);
 	activeDrivers --;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WavWrt_SetFileName(void* drvObj, const char* fileName)
@@ -186,7 +186,7 @@ UINT8 WavWrt_SetFileName(void* drvObj, const char* fileName)
 		free(drv->fileName);
 	drv->fileName = strdup(fileName);
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 const char* WavWrt_GetFileName(void* drvObj)
@@ -196,15 +196,15 @@ const char* WavWrt_GetFileName(void* drvObj)
 	return drv->fileName;
 }
 
-UINT8 WavWrt_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* audDrvParam)
+UINT8 WavWrt_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_WAV_WRT* drv = (DRV_WAV_WRT*)drvObj;
 	UINT32 DataLen;
 	
 	if (drv->devState != 0)
-		return AERR_WASDONE;	// already running
+		return LWAO_ERR_WASDONE;	// already running
 	if (drv->fileName == NULL)
-		return AERR_CALL_SPC_FUNC;
+		return LWAO_ERR_CALL_SPC_FUNC;
 	
 	drv->audDrvPtr = audDrvParam;
 	if (options == NULL)
@@ -219,7 +219,7 @@ UINT8 WavWrt_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* aud
 	
 	drv->hFile = fopen(drv->fileName, "wb");
 	if (drv->hFile == NULL)
-		return AERR_FILE_ERR;
+		return LWAO_ERR_FILE_ERR;
 	
 	drv->hdrSize = 0x00;
 	fputBE32(0x52494646, drv->hFile);	// 'RIFF'
@@ -251,7 +251,7 @@ UINT8 WavWrt_Start(void* drvObj, UINT32 deviceID, AUDIO_OPTS* options, void* aud
 	drv->wrtDataBytes = 0x00;
 	drv->devState = 1;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WavWrt_Stop(void* drvObj)
@@ -260,7 +260,7 @@ UINT8 WavWrt_Stop(void* drvObj)
 	UINT32 riffLen;
 	
 	if (drv->devState != 1)
-		return AERR_NOT_OPEN;
+		return LWAO_ERR_NOT_OPEN;
 	
 	drv->devState = 2;
 	
@@ -274,18 +274,18 @@ UINT8 WavWrt_Stop(void* drvObj)
 	fclose(drv->hFile);	drv->hFile = NULL;
 	drv->devState = 0;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WavWrt_PauseResume(void* drvObj)
 {
-	return AERR_NO_SUPPORT;
+	return LWAO_ERR_NO_SUPPORT;
 }
 
 
-UINT8 WavWrt_SetCallback(void* drvObj, AUDFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 WavWrt_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
-	return AERR_NO_SUPPORT;
+	return LWAO_ERR_NO_SUPPORT;
 }
 
 UINT32 WavWrt_GetBufferSize(void* drvObj)
@@ -295,7 +295,7 @@ UINT32 WavWrt_GetBufferSize(void* drvObj)
 
 UINT8 WavWrt_IsBusy(void* drvObj)
 {
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT8 WavWrt_WriteData(void* drvObj, UINT32 dataSize, void* data)
@@ -304,14 +304,14 @@ UINT8 WavWrt_WriteData(void* drvObj, UINT32 dataSize, void* data)
 	UINT32 wrtBytes;
 	
 	if (drv->hFile == NULL)
-		return AERR_NOT_OPEN;
+		return LWAO_ERR_NOT_OPEN;
 	
 	wrtBytes = (UINT32)fwrite(data, 0x01, dataSize, drv->hFile);
 	if (! wrtBytes)
-		return AERR_FILE_ERR;
+		return LWAO_ERR_FILE_ERR;
 	drv->wrtDataBytes += wrtBytes;
 	
-	return AERR_OK;
+	return LWAO_ERR_OK;
 }
 
 UINT32 WavWrt_GetLatency(void* drvObj)

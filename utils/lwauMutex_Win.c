@@ -7,19 +7,19 @@
 #include <windows.h>
 
 #include "../stdtype.h"
-#include "OSMutex.h"
+#include "lwauMutex.h"
 
-//typedef struct _os_mutex OS_MUTEX;
-struct _os_mutex
+//typedef struct _lwau_mutex LWAU_MUTEX;
+struct _lwau_mutex
 {
 	HANDLE hMutex;
 };
 
-UINT8 OSMutex_Init(OS_MUTEX** retMutex, UINT8 initLocked)
+UINT8 lwauMutex_Init(LWAU_MUTEX** retMutex, UINT8 initLocked)
 {
-	OS_MUTEX* mtx;
+	LWAU_MUTEX* mtx;
 	
-	mtx = (OS_MUTEX*)calloc(1, sizeof(OS_MUTEX));
+	mtx = (LWAU_MUTEX*)calloc(1, sizeof(LWAU_MUTEX));
 	if (mtx == NULL)
 		return 0xFF;
 	
@@ -34,7 +34,7 @@ UINT8 OSMutex_Init(OS_MUTEX** retMutex, UINT8 initLocked)
 	return 0x00;
 }
 
-void OSMutex_Deinit(OS_MUTEX* mtx)
+void lwauMutex_Deinit(LWAU_MUTEX* mtx)
 {
 	CloseHandle(mtx->hMutex);
 	free(mtx);
@@ -42,7 +42,7 @@ void OSMutex_Deinit(OS_MUTEX* mtx)
 	return;
 }
 
-UINT8 OSMutex_Lock(OS_MUTEX* mtx)
+UINT8 lwauMutex_Lock(LWAU_MUTEX* mtx)
 {
 	DWORD retVal;
 	
@@ -53,7 +53,7 @@ UINT8 OSMutex_Lock(OS_MUTEX* mtx)
 		return 0xFF;
 }
 
-UINT8 OSMutex_TryLock(OS_MUTEX* mtx)
+UINT8 lwauMutex_TryLock(LWAU_MUTEX* mtx)
 {
 	DWORD retVal;
 	
@@ -66,7 +66,7 @@ UINT8 OSMutex_TryLock(OS_MUTEX* mtx)
 		return 0xFF;
 }
 
-UINT8 OSMutex_Unlock(OS_MUTEX* mtx)
+UINT8 lwauMutex_Unlock(LWAU_MUTEX* mtx)
 {
 	BOOL retVal;
 	
