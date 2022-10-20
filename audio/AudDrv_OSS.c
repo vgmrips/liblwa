@@ -42,7 +42,7 @@ typedef struct _oss_parameters
 	int format;		// SNDCTL_DSP_SETFMT
 	int channels;	// SNDCTL_DSP_CHANNELS
 	int smplrate;	// SNDCTL_DSP_SPEED
-} OSS_PARAMS;
+} lwaodOSS_PARAMS;
 typedef struct _oss_driver
 {
 	void* audDrvPtr;
@@ -65,30 +65,30 @@ typedef struct _oss_driver
 	
 	void* userParam;
 	LWAOFUNC_FILLBUF FillBuffer;
-	OSS_PARAMS ossParams;
+	lwaodOSS_PARAMS ossParams;
 } DRV_OSS;
 
 
-UINT8 OSS_IsAvailable(void);
-UINT8 OSS_Init(void);
-UINT8 OSS_Deinit(void);
-const LWAO_DEV_LIST* OSS_GetDeviceList(void);
-LWAO_OPTS* OSS_GetDefaultOpts(void);
+UINT8 lwaodOSS_IsAvailable(void);
+UINT8 lwaodOSS_Init(void);
+UINT8 lwaodOSS_Deinit(void);
+const LWAO_DEV_LIST* lwaodOSS_GetDeviceList(void);
+LWAO_OPTS* lwaodOSS_GetDefaultOpts(void);
 
-UINT8 OSS_Create(void** retDrvObj);
-UINT8 OSS_Destroy(void* drvObj);
+UINT8 lwaodOSS_Create(void** retDrvObj);
+UINT8 lwaodOSS_Destroy(void* drvObj);
 static UINT32 GetNearestBitVal(UINT32 value);
-UINT8 OSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 OSS_Stop(void* drvObj);
-UINT8 OSS_Pause(void* drvObj);
-UINT8 OSS_Resume(void* drvObj);
+UINT8 lwaodOSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
+UINT8 lwaodOSS_Stop(void* drvObj);
+UINT8 lwaodOSS_Pause(void* drvObj);
+UINT8 lwaodOSS_Resume(void* drvObj);
 
-UINT8 OSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 OSS_GetBufferSize(void* drvObj);
-UINT8 OSS_IsBusy(void* drvObj);
-UINT8 OSS_WriteData(void* drvObj, UINT32 dataSize, void* data);
+UINT8 lwaodOSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT32 lwaodOSS_GetBufferSize(void* drvObj);
+UINT8 lwaodOSS_IsBusy(void* drvObj);
+UINT8 lwaodOSS_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
-UINT32 OSS_GetLatency(void* drvObj);
+UINT32 lwaodOSS_GetLatency(void* drvObj);
 static void OssThread(void* Arg);
 
 
@@ -96,18 +96,18 @@ LWAO_DRIVER lwaoDrv_OSS =
 {
 	{LWAO_DTYPE_OUT, LWAO_DSIG_OSS, "OSS"},
 	
-	OSS_IsAvailable,
-	OSS_Init, OSS_Deinit,
-	OSS_GetDeviceList, OSS_GetDefaultOpts,
+	lwaodOSS_IsAvailable,
+	lwaodOSS_Init, lwaodOSS_Deinit,
+	lwaodOSS_GetDeviceList, lwaodOSS_GetDefaultOpts,
 	
-	OSS_Create, OSS_Destroy,
-	OSS_Start, OSS_Stop,
-	OSS_Pause, OSS_Resume,
+	lwaodOSS_Create, lwaodOSS_Destroy,
+	lwaodOSS_Start, lwaodOSS_Stop,
+	lwaodOSS_Pause, lwaodOSS_Resume,
 	
-	OSS_SetCallback, OSS_GetBufferSize,
-	OSS_IsBusy, OSS_WriteData,
+	lwaodOSS_SetCallback, lwaodOSS_GetBufferSize,
+	lwaodOSS_IsBusy, lwaodOSS_WriteData,
 	
-	OSS_GetLatency,
+	lwaodOSS_GetLatency,
 };
 
 
@@ -118,7 +118,7 @@ static LWAO_DEV_LIST deviceList;
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
 
-UINT8 OSS_IsAvailable(void)
+UINT8 lwaodOSS_IsAvailable(void)
 {
 	int hFile;
 	
@@ -130,7 +130,7 @@ UINT8 OSS_IsAvailable(void)
 	return 1;
 }
 
-UINT8 OSS_Init(void)
+UINT8 lwaodOSS_Init(void)
 {
 	if (isInit)
 		return LWAO_ERR_WASDONE;
@@ -153,7 +153,7 @@ UINT8 OSS_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 OSS_Deinit(void)
+UINT8 lwaodOSS_Deinit(void)
 {
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -166,18 +166,18 @@ UINT8 OSS_Deinit(void)
 	return LWAO_ERR_OK;
 }
 
-const LWAO_DEV_LIST* OSS_GetDeviceList(void)
+const LWAO_DEV_LIST* lwaodOSS_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-LWAO_OPTS* OSS_GetDefaultOpts(void)
+LWAO_OPTS* lwaodOSS_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
 
 
-UINT8 OSS_Create(void** retDrvObj)
+UINT8 lwaodOSS_Create(void** retDrvObj)
 {
 	DRV_OSS* drv;
 	UINT8 retVal8;
@@ -198,7 +198,7 @@ UINT8 OSS_Create(void** retDrvObj)
 	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
-		OSS_Destroy(drv);
+		lwaodOSS_Destroy(drv);
 		*retDrvObj = NULL;
 		return LWAO_ERR_API_ERR;
 	}
@@ -207,12 +207,12 @@ UINT8 OSS_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 OSS_Destroy(void* drvObj)
+UINT8 lwaodOSS_Destroy(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
 	if (drv->devState != 0)
-		OSS_Stop(drvObj);
+		lwaodOSS_Stop(drvObj);
 #ifdef ENABLE_OSS_THREAD
 	if (drv->hThread != NULL)
 	{
@@ -250,7 +250,7 @@ static UINT32 GetNearestBitVal(UINT32 value)
 	return 0;
 }
 
-UINT8 OSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+UINT8 lwaodOSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	UINT64 tempInt64;
@@ -343,7 +343,7 @@ UINT8 OSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvP
 	return LWAO_ERR_OK;
 }
 
-UINT8 OSS_Stop(void* drvObj)
+UINT8 lwaodOSS_Stop(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	int retVal;
@@ -369,7 +369,7 @@ UINT8 OSS_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 OSS_Pause(void* drvObj)
+UINT8 lwaodOSS_Pause(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -380,7 +380,7 @@ UINT8 OSS_Pause(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 OSS_Resume(void* drvObj)
+UINT8 lwaodOSS_Resume(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -392,7 +392,7 @@ UINT8 OSS_Resume(void* drvObj)
 }
 
 
-UINT8 OSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 lwaodOSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -410,14 +410,14 @@ UINT8 OSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* user
 #endif
 }
 
-UINT32 OSS_GetBufferSize(void* drvObj)
+UINT32 lwaodOSS_GetBufferSize(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 OSS_IsBusy(void* drvObj)
+UINT8 lwaodOSS_IsBusy(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -428,7 +428,7 @@ UINT8 OSS_IsBusy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 OSS_WriteData(void* drvObj, UINT32 dataSize, void* data)
+UINT8 lwaodOSS_WriteData(void* drvObj, UINT32 dataSize, void* data)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	ssize_t wrtBytes;
@@ -443,7 +443,7 @@ UINT8 OSS_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 OSS_GetLatency(void* drvObj)
+UINT32 lwaodOSS_GetLatency(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	int retVal;

@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 	{
 		void* pulseDrv;
 		pulseDrv = lwaodGetDrvData(audDrv);
-		Pulse_SetStreamDesc(pulseDrv, "audiotest");
+		lwaodPulse_SetStreamDesc(pulseDrv, "audiotest");
 	}
 #endif
 
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
 			{
 #ifdef LWAO_DRIVER_WAVEWRITE
 				void* aDrv = lwaodGetDrvData(audDrvLog);
-				WavWrt_SetFileName(aDrv, "waveOut.wav");
+				lwaodWavWrt_SetFileName(aDrv, "waveOut.wav");
 #endif
 			}
 			else if (drvInfo->drvSig == LWAO_DSIG_DSOUND)
@@ -304,7 +304,7 @@ static void SetupDirectSound(void* audDrv)
 #else
 	hWndConsole = GetDesktopWindow();	// not as nice, but works
 #endif
-	DSound_SetHWnd(aDrv, hWndConsole);
+	lwaodDSound_SetHWnd(aDrv, hWndConsole);
 #endif	// _WIN32
 	
 	return;

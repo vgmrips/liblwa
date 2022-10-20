@@ -62,25 +62,25 @@ typedef struct _winmm_driver
 } DRV_WINMM;
 
 
-UINT8 WinMM_IsAvailable(void);
-UINT8 WinMM_Init(void);
-UINT8 WinMM_Deinit(void);
-const LWAO_DEV_LIST* WinMM_GetDeviceList(void);
-LWAO_OPTS* WinMM_GetDefaultOpts(void);
+UINT8 lwaodWinMM_IsAvailable(void);
+UINT8 lwaodWinMM_Init(void);
+UINT8 lwaodWinMM_Deinit(void);
+const LWAO_DEV_LIST* lwaodWinMM_GetDeviceList(void);
+LWAO_OPTS* lwaodWinMM_GetDefaultOpts(void);
 
-UINT8 WinMM_Create(void** retDrvObj);
-UINT8 WinMM_Destroy(void* drvObj);
-UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 WinMM_Stop(void* drvObj);
-UINT8 WinMM_Pause(void* drvObj);
-UINT8 WinMM_Resume(void* drvObj);
+UINT8 lwaodWinMM_Create(void** retDrvObj);
+UINT8 lwaodWinMM_Destroy(void* drvObj);
+UINT8 lwaodWinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
+UINT8 lwaodWinMM_Stop(void* drvObj);
+UINT8 lwaodWinMM_Pause(void* drvObj);
+UINT8 lwaodWinMM_Resume(void* drvObj);
 
-UINT8 WinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 WinMM_GetBufferSize(void* drvObj);
-UINT8 WinMM_IsBusy(void* drvObj);
-UINT8 WinMM_WriteData(void* drvObj, UINT32 dataSize, void* data);
+UINT8 lwaodWinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT32 lwaodWinMM_GetBufferSize(void* drvObj);
+UINT8 lwaodWinMM_IsBusy(void* drvObj);
+UINT8 lwaodWinMM_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
-UINT32 WinMM_GetLatency(void* drvObj);
+UINT32 lwaodWinMM_GetLatency(void* drvObj);
 static void WaveOutThread(void* Arg);
 static void WriteBuffer(DRV_WINMM* drv, WAVEHDR* wHdr);
 static void BufCheck(DRV_WINMM* drv);
@@ -90,18 +90,18 @@ LWAO_DRIVER lwaoDrv_WinMM =
 {
 	{LWAO_DTYPE_OUT, LWAO_DSIG_WINMM, "WinMM"},
 	
-	WinMM_IsAvailable,
-	WinMM_Init, WinMM_Deinit,
-	WinMM_GetDeviceList, WinMM_GetDefaultOpts,
+	lwaodWinMM_IsAvailable,
+	lwaodWinMM_Init, lwaodWinMM_Deinit,
+	lwaodWinMM_GetDeviceList, lwaodWinMM_GetDefaultOpts,
 	
-	WinMM_Create, WinMM_Destroy,
-	WinMM_Start, WinMM_Stop,
-	WinMM_Pause, WinMM_Resume,
+	lwaodWinMM_Create, lwaodWinMM_Destroy,
+	lwaodWinMM_Start, lwaodWinMM_Stop,
+	lwaodWinMM_Pause, lwaodWinMM_Resume,
 	
-	WinMM_SetCallback, WinMM_GetBufferSize,
-	WinMM_IsBusy, WinMM_WriteData,
+	lwaodWinMM_SetCallback, lwaodWinMM_GetBufferSize,
+	lwaodWinMM_IsBusy, lwaodWinMM_WriteData,
 	
-	WinMM_GetLatency,
+	lwaodWinMM_GetLatency,
 };
 
 
@@ -112,7 +112,7 @@ static UINT* devListIDs;
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
 
-UINT8 WinMM_IsAvailable(void)
+UINT8 lwaodWinMM_IsAvailable(void)
 {
 	UINT32 numDevs;
 	
@@ -120,7 +120,7 @@ UINT8 WinMM_IsAvailable(void)
 	return numDevs ? 1 : 0;
 }
 
-UINT8 WinMM_Init(void)
+UINT8 lwaodWinMM_Init(void)
 {
 	UINT numDevs;
 	WAVEOUTCAPSA woCaps;
@@ -171,7 +171,7 @@ UINT8 WinMM_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 WinMM_Deinit(void)
+UINT8 lwaodWinMM_Deinit(void)
 {
 	UINT32 curDev;
 	
@@ -189,18 +189,18 @@ UINT8 WinMM_Deinit(void)
 	return LWAO_ERR_OK;
 }
 
-const LWAO_DEV_LIST* WinMM_GetDeviceList(void)
+const LWAO_DEV_LIST* lwaodWinMM_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-LWAO_OPTS* WinMM_GetDefaultOpts(void)
+LWAO_OPTS* lwaodWinMM_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
 
 
-UINT8 WinMM_Create(void** retDrvObj)
+UINT8 lwaodWinMM_Create(void** retDrvObj)
 {
 	DRV_WINMM* drv;
 	UINT8 retVal8;
@@ -219,7 +219,7 @@ UINT8 WinMM_Create(void** retDrvObj)
 	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
-		WinMM_Destroy(drv);
+		lwaodWinMM_Destroy(drv);
 		*retDrvObj = NULL;
 		return LWAO_ERR_API_ERR;
 	}
@@ -228,12 +228,12 @@ UINT8 WinMM_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 WinMM_Destroy(void* drvObj)
+UINT8 lwaodWinMM_Destroy(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	
 	if (drv->devState != 0)
-		WinMM_Stop(drvObj);
+		lwaodWinMM_Stop(drvObj);
 	if (drv->hThread != NULL)
 	{
 		lwauThread_Cancel(drv->hThread);
@@ -250,7 +250,7 @@ UINT8 WinMM_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+UINT8 lwaodWinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	UINT64 tempInt64;
@@ -334,7 +334,7 @@ UINT8 WinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDr
 	return LWAO_ERR_OK;
 }
 
-UINT8 WinMM_Stop(void* drvObj)
+UINT8 lwaodWinMM_Stop(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	UINT32 curBuf;
@@ -363,7 +363,7 @@ UINT8 WinMM_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 WinMM_Pause(void* drvObj)
+UINT8 lwaodWinMM_Pause(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	MMRESULT retValMM;
@@ -375,7 +375,7 @@ UINT8 WinMM_Pause(void* drvObj)
 	return (retValMM == MMSYSERR_NOERROR) ? LWAO_ERR_OK : 0xFF;
 }
 
-UINT8 WinMM_Resume(void* drvObj)
+UINT8 lwaodWinMM_Resume(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	MMRESULT retValMM;
@@ -388,7 +388,7 @@ UINT8 WinMM_Resume(void* drvObj)
 }
 
 
-UINT8 WinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 lwaodWinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	
@@ -400,14 +400,14 @@ UINT8 WinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* us
 	return LWAO_ERR_OK;
 }
 
-UINT32 WinMM_GetBufferSize(void* drvObj)
+UINT32 lwaodWinMM_GetBufferSize(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 WinMM_IsBusy(void* drvObj)
+UINT8 lwaodWinMM_IsBusy(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	UINT32 curBuf;
@@ -423,7 +423,7 @@ UINT8 WinMM_IsBusy(void* drvObj)
 	return LWAO_ERR_BUSY;
 }
 
-UINT8 WinMM_WriteData(void* drvObj, UINT32 dataSize, void* data)
+UINT8 lwaodWinMM_WriteData(void* drvObj, UINT32 dataSize, void* data)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	UINT32 curBuf;
@@ -454,7 +454,7 @@ UINT8 WinMM_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 WinMM_GetLatency(void* drvObj)
+UINT32 lwaodWinMM_GetLatency(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	UINT32 bufBehind;

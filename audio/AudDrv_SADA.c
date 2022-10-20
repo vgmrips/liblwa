@@ -60,25 +60,25 @@ typedef struct _sada_driver
 } DRV_SADA;
 
 
-UINT8 SADA_IsAvailable(void);
-UINT8 SADA_Init(void);
-UINT8 SADA_Deinit(void);
-const LWAO_DEV_LIST* SADA_GetDeviceList(void);
-LWAO_OPTS* SADA_GetDefaultOpts(void);
+UINT8 lwaodSADA_IsAvailable(void);
+UINT8 lwaodSADA_Init(void);
+UINT8 lwaodSADA_Deinit(void);
+const LWAO_DEV_LIST* lwaodSADA_GetDeviceList(void);
+LWAO_OPTS* lwaodSADA_GetDefaultOpts(void);
 
-UINT8 SADA_Create(void** retDrvObj);
-UINT8 SADA_Destroy(void* drvObj);
-UINT8 SADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 SADA_Stop(void* drvObj);
-UINT8 SADA_Pause(void* drvObj);
-UINT8 SADA_Resume(void* drvObj);
+UINT8 lwaodSADA_Create(void** retDrvObj);
+UINT8 lwaodSADA_Destroy(void* drvObj);
+UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
+UINT8 lwaodSADA_Stop(void* drvObj);
+UINT8 lwaodSADA_Pause(void* drvObj);
+UINT8 lwaodSADA_Resume(void* drvObj);
 
-UINT8 SADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 SADA_GetBufferSize(void* drvObj);
-UINT8 SADA_IsBusy(void* drvObj);
-UINT8 SADA_WriteData(void* drvObj, UINT32 dataSize, void* data);
+UINT8 lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT32 lwaodSADA_GetBufferSize(void* drvObj);
+UINT8 lwaodSADA_IsBusy(void* drvObj);
+UINT8 lwaodSADA_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
-UINT32 SADA_GetLatency(void* drvObj);
+UINT32 lwaodSADA_GetLatency(void* drvObj);
 static void SadaThread(void* Arg);
 
 
@@ -86,18 +86,18 @@ LWAO_DRIVER lwaoDrv_SADA =
 {
 	{LWAO_DTYPE_OUT, LWAO_DSIG_SADA, "SADA"},
 	
-	SADA_IsAvailable,
-	SADA_Init, SADA_Deinit,
-	SADA_GetDeviceList, SADA_GetDefaultOpts,
+	lwaodSADA_IsAvailable,
+	lwaodSADA_Init, lwaodSADA_Deinit,
+	lwaodSADA_GetDeviceList, lwaodSADA_GetDefaultOpts,
 	
-	SADA_Create, SADA_Destroy,
-	SADA_Start, SADA_Stop,
-	SADA_Pause, SADA_Resume,
+	lwaodSADA_Create, lwaodSADA_Destroy,
+	lwaodSADA_Start, lwaodSADA_Stop,
+	lwaodSADA_Pause, lwaodSADA_Resume,
 	
-	SADA_SetCallback, SADA_GetBufferSize,
-	SADA_IsBusy, SADA_WriteData,
+	lwaodSADA_SetCallback, lwaodSADA_GetBufferSize,
+	lwaodSADA_IsBusy, lwaodSADA_WriteData,
 	
-	SADA_GetLatency,
+	lwaodSADA_GetLatency,
 };
 
 
@@ -108,7 +108,7 @@ static LWAO_DEV_LIST deviceList;
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
 
-UINT8 SADA_IsAvailable(void)
+UINT8 lwaodSADA_IsAvailable(void)
 {
 	int hFile;
 	
@@ -120,7 +120,7 @@ UINT8 SADA_IsAvailable(void)
 	return 1;
 }
 
-UINT8 SADA_Init(void)
+UINT8 lwaodSADA_Init(void)
 {
 	if (isInit)
 		return LWAO_ERR_WASDONE;
@@ -143,7 +143,7 @@ UINT8 SADA_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 SADA_Deinit(void)
+UINT8 lwaodSADA_Deinit(void)
 {
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -156,18 +156,18 @@ UINT8 SADA_Deinit(void)
 	return LWAO_ERR_OK;
 }
 
-const LWAO_DEV_LIST* SADA_GetDeviceList(void)
+const LWAO_DEV_LIST* lwaodSADA_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-LWAO_OPTS* SADA_GetDefaultOpts(void)
+LWAO_OPTS* lwaodSADA_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
 
 
-UINT8 SADA_Create(void** retDrvObj)
+UINT8 lwaodSADA_Create(void** retDrvObj)
 {
 	DRV_SADA* drv;
 	UINT8 retVal8;
@@ -188,7 +188,7 @@ UINT8 SADA_Create(void** retDrvObj)
 	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
-		SADA_Destroy(drv);
+		lwaodSADA_Destroy(drv);
 		*retDrvObj = NULL;
 		return LWAO_ERR_API_ERR;
 	}
@@ -197,12 +197,12 @@ UINT8 SADA_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 SADA_Destroy(void* drvObj)
+UINT8 lwaodSADA_Destroy(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
 	if (drv->devState != 0)
-		SADA_Stop(drvObj);
+		lwaodSADA_Stop(drvObj);
 #ifdef ENABLE_SADA_THREAD
 	if (drv->hThread != NULL)
 	{
@@ -221,7 +221,7 @@ UINT8 SADA_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 SADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	UINT64 tempInt64;
@@ -289,7 +289,7 @@ UINT8 SADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrv
 	return LWAO_ERR_OK;
 }
 
-UINT8 SADA_Stop(void* drvObj)
+UINT8 lwaodSADA_Stop(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	int retVal;
@@ -315,7 +315,7 @@ UINT8 SADA_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 SADA_Pause(void* drvObj)
+UINT8 lwaodSADA_Pause(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -326,7 +326,7 @@ UINT8 SADA_Pause(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 SADA_Resume(void* drvObj)
+UINT8 lwaodSADA_Resume(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -338,7 +338,7 @@ UINT8 SADA_Resume(void* drvObj)
 }
 
 
-UINT8 SADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -356,14 +356,14 @@ UINT8 SADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* use
 #endif
 }
 
-UINT32 SADA_GetBufferSize(void* drvObj)
+UINT32 lwaodSADA_GetBufferSize(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 SADA_IsBusy(void* drvObj)
+UINT8 lwaodSADA_IsBusy(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -374,7 +374,7 @@ UINT8 SADA_IsBusy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 SADA_WriteData(void* drvObj, UINT32 dataSize, void* data)
+UINT8 lwaodSADA_WriteData(void* drvObj, UINT32 dataSize, void* data)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	ssize_t wrtBytes;
@@ -389,7 +389,7 @@ UINT8 SADA_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 SADA_GetLatency(void* drvObj)
+UINT32 lwaodSADA_GetLatency(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	int retVal;

@@ -54,25 +54,25 @@ typedef struct _libao_driver
 } DRV_AO;
 
 
-UINT8 LibAO_IsAvailable(void);
-UINT8 LibAO_Init(void);
-UINT8 LibAO_Deinit(void);
-const LWAO_DEV_LIST* LibAO_GetDeviceList(void);
-LWAO_OPTS* LibAO_GetDefaultOpts(void);
+UINT8 lwaodLibAO_IsAvailable(void);
+UINT8 lwaodLibAO_Init(void);
+UINT8 lwaodLibAO_Deinit(void);
+const LWAO_DEV_LIST* lwaodLibAO_GetDeviceList(void);
+LWAO_OPTS* lwaodLibAO_GetDefaultOpts(void);
 
-UINT8 LibAO_Create(void** retDrvObj);
-UINT8 LibAO_Destroy(void* drvObj);
-UINT8 LibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 LibAO_Stop(void* drvObj);
-UINT8 LibAO_Pause(void* drvObj);
-UINT8 LibAO_Resume(void* drvObj);
+UINT8 lwaodLibAO_Create(void** retDrvObj);
+UINT8 lwaodLibAO_Destroy(void* drvObj);
+UINT8 lwaodLibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
+UINT8 lwaodLibAO_Stop(void* drvObj);
+UINT8 lwaodLibAO_Pause(void* drvObj);
+UINT8 lwaodLibAO_Resume(void* drvObj);
 
-UINT8 LibAO_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 LibAO_GetBufferSize(void* drvObj);
-UINT8 LibAO_IsBusy(void* drvObj);
-UINT8 LibAO_WriteData(void* drvObj, UINT32 dataSize, void* data);
+UINT8 lwaodLibAO_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT32 lwaodLibAO_GetBufferSize(void* drvObj);
+UINT8 lwaodLibAO_IsBusy(void* drvObj);
+UINT8 lwaodLibAO_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
-UINT32 LibAO_GetLatency(void* drvObj);
+UINT32 lwaodLibAO_GetLatency(void* drvObj);
 static void AoThread(void* Arg);
 
 
@@ -80,18 +80,18 @@ LWAO_DRIVER lwaoDrv_LibAO =
 {
 	{LWAO_DTYPE_OUT, LWAO_DSIG_LIBAO, "libao"},
 	
-	LibAO_IsAvailable,
-	LibAO_Init, LibAO_Deinit,
-	LibAO_GetDeviceList, LibAO_GetDefaultOpts,
+	lwaodLibAO_IsAvailable,
+	lwaodLibAO_Init, lwaodLibAO_Deinit,
+	lwaodLibAO_GetDeviceList, lwaodLibAO_GetDefaultOpts,
 	
-	LibAO_Create, LibAO_Destroy,
-	LibAO_Start, LibAO_Stop,
-	LibAO_Pause, LibAO_Resume,
+	lwaodLibAO_Create, lwaodLibAO_Destroy,
+	lwaodLibAO_Start, lwaodLibAO_Stop,
+	lwaodLibAO_Pause, lwaodLibAO_Resume,
 	
-	LibAO_SetCallback, LibAO_GetBufferSize,
-	LibAO_IsBusy, LibAO_WriteData,
+	lwaodLibAO_SetCallback, lwaodLibAO_GetBufferSize,
+	lwaodLibAO_IsBusy, lwaodLibAO_WriteData,
 	
-	LibAO_GetLatency,
+	lwaodLibAO_GetLatency,
 };
 
 
@@ -102,12 +102,12 @@ static LWAO_DEV_LIST deviceList;
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
 
-UINT8 LibAO_IsAvailable(void)
+UINT8 lwaodLibAO_IsAvailable(void)
 {
 	return 1;
 }
 
-UINT8 LibAO_Init(void)
+UINT8 lwaodLibAO_Init(void)
 {
 	// TODO: generate a list of all libao drivers
 	//UINT32 numDevs;
@@ -136,7 +136,7 @@ UINT8 LibAO_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LibAO_Deinit(void)
+UINT8 lwaodLibAO_Deinit(void)
 {
 	//UINT32 curDev;
 	
@@ -153,18 +153,18 @@ UINT8 LibAO_Deinit(void)
 	return LWAO_ERR_OK;
 }
 
-const LWAO_DEV_LIST* LibAO_GetDeviceList(void)
+const LWAO_DEV_LIST* lwaodLibAO_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-LWAO_OPTS* LibAO_GetDefaultOpts(void)
+LWAO_OPTS* lwaodLibAO_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
 
 
-UINT8 LibAO_Create(void** retDrvObj)
+UINT8 lwaodLibAO_Create(void** retDrvObj)
 {
 	DRV_AO* drv;
 	UINT8 retVal8;
@@ -183,7 +183,7 @@ UINT8 LibAO_Create(void** retDrvObj)
 	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
-		LibAO_Destroy(drv);
+		lwaodLibAO_Destroy(drv);
 		*retDrvObj = NULL;
 		return LWAO_ERR_API_ERR;
 	}
@@ -192,12 +192,12 @@ UINT8 LibAO_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LibAO_Destroy(void* drvObj)
+UINT8 lwaodLibAO_Destroy(void* drvObj)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	
 	if (drv->devState != 0)
-		LibAO_Stop(drvObj);
+		lwaodLibAO_Stop(drvObj);
 	if (drv->hThread != NULL)
 	{
 		lwauThread_Cancel(drv->hThread);
@@ -214,7 +214,7 @@ UINT8 LibAO_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+UINT8 lwaodLibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	UINT64 tempInt64;
@@ -267,7 +267,7 @@ UINT8 LibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDr
 	return LWAO_ERR_OK;
 }
 
-UINT8 LibAO_Stop(void* drvObj)
+UINT8 lwaodLibAO_Stop(void* drvObj)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	int retVal;
@@ -291,7 +291,7 @@ UINT8 LibAO_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LibAO_Pause(void* drvObj)
+UINT8 lwaodLibAO_Pause(void* drvObj)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	
@@ -302,7 +302,7 @@ UINT8 LibAO_Pause(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LibAO_Resume(void* drvObj)
+UINT8 lwaodLibAO_Resume(void* drvObj)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	
@@ -314,7 +314,7 @@ UINT8 LibAO_Resume(void* drvObj)
 }
 
 
-UINT8 LibAO_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 lwaodLibAO_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	
@@ -328,14 +328,14 @@ UINT8 LibAO_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* us
 	return LWAO_ERR_OK;
 }
 
-UINT32 LibAO_GetBufferSize(void* drvObj)
+UINT32 lwaodLibAO_GetBufferSize(void* drvObj)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 LibAO_IsBusy(void* drvObj)
+UINT8 lwaodLibAO_IsBusy(void* drvObj)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	
@@ -346,7 +346,7 @@ UINT8 LibAO_IsBusy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LibAO_WriteData(void* drvObj, UINT32 dataSize, void* data)
+UINT8 lwaodLibAO_WriteData(void* drvObj, UINT32 dataSize, void* data)
 {
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	int retVal;
@@ -361,7 +361,7 @@ UINT8 LibAO_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 LibAO_GetLatency(void* drvObj)
+UINT32 lwaodLibAO_GetLatency(void* drvObj)
 {
 	//DRV_AO* drv = (DRV_AO*)drvObj;
 	

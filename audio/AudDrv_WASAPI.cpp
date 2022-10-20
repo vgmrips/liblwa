@@ -54,26 +54,26 @@ typedef struct _wasapi_driver
 } DRV_WASAPI;
 
 
-EXT_C UINT8 WASAPI_IsAvailable(void);
-EXT_C UINT8 WASAPI_Init(void);
-EXT_C UINT8 WASAPI_Deinit(void);
-EXT_C const LWAO_DEV_LIST* WASAPI_GetDeviceList(void);
-EXT_C LWAO_OPTS* WASAPI_GetDefaultOpts(void);
+EXT_C UINT8 lwaodWASAPI_IsAvailable(void);
+EXT_C UINT8 lwaodWASAPI_Init(void);
+EXT_C UINT8 lwaodWASAPI_Deinit(void);
+EXT_C const LWAO_DEV_LIST* lwaodWASAPI_GetDeviceList(void);
+EXT_C LWAO_OPTS* lwaodWASAPI_GetDefaultOpts(void);
 
-EXT_C UINT8 WASAPI_Create(void** retDrvObj);
-EXT_C UINT8 WASAPI_Destroy(void* drvObj);
-EXT_C UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-EXT_C UINT8 WASAPI_Stop(void* drvObj);
-EXT_C UINT8 WASAPI_Pause(void* drvObj);
-EXT_C UINT8 WASAPI_Resume(void* drvObj);
+EXT_C UINT8 lwaodWASAPI_Create(void** retDrvObj);
+EXT_C UINT8 lwaodWASAPI_Destroy(void* drvObj);
+EXT_C UINT8 lwaodWASAPI_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
+EXT_C UINT8 lwaodWASAPI_Stop(void* drvObj);
+EXT_C UINT8 lwaodWASAPI_Pause(void* drvObj);
+EXT_C UINT8 lwaodWASAPI_Resume(void* drvObj);
 
-EXT_C UINT8 WASAPI_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-EXT_C UINT32 WASAPI_GetBufferSize(void* drvObj);
+EXT_C UINT8 lwaodWASAPI_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+EXT_C UINT32 lwaodWASAPI_GetBufferSize(void* drvObj);
 static UINT32 GetFreeSamples(DRV_WASAPI* drv);
-EXT_C UINT8 WASAPI_IsBusy(void* drvObj);
-EXT_C UINT8 WASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data);
+EXT_C UINT8 lwaodWASAPI_IsBusy(void* drvObj);
+EXT_C UINT8 lwaodWASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
-EXT_C UINT32 WASAPI_GetLatency(void* drvObj);
+EXT_C UINT32 lwaodWASAPI_GetLatency(void* drvObj);
 static void WasapiThread(void* Arg);
 
 
@@ -83,18 +83,18 @@ LWAO_DRIVER lwaoDrv_WASAPI =
 {
 	{LWAO_DTYPE_OUT, LWAO_DSIG_WASAPI, "WASAPI"},
 	
-	WASAPI_IsAvailable,
-	WASAPI_Init, WASAPI_Deinit,
-	WASAPI_GetDeviceList, WASAPI_GetDefaultOpts,
+	lwaodWASAPI_IsAvailable,
+	lwaodWASAPI_Init, lwaodWASAPI_Deinit,
+	lwaodWASAPI_GetDeviceList, lwaodWASAPI_GetDefaultOpts,
 	
-	WASAPI_Create, WASAPI_Destroy,
-	WASAPI_Start, WASAPI_Stop,
-	WASAPI_Pause, WASAPI_Resume,
+	lwaodWASAPI_Create, lwaodWASAPI_Destroy,
+	lwaodWASAPI_Start, lwaodWASAPI_Stop,
+	lwaodWASAPI_Pause, lwaodWASAPI_Resume,
 	
-	WASAPI_SetCallback, WASAPI_GetBufferSize,
-	WASAPI_IsBusy, WASAPI_WriteData,
+	lwaodWASAPI_SetCallback, lwaodWASAPI_GetBufferSize,
+	lwaodWASAPI_IsBusy, lwaodWASAPI_WriteData,
 	
-	WASAPI_GetLatency,
+	lwaodWASAPI_GetLatency,
 };
 }	// extern "C"
 
@@ -112,7 +112,7 @@ static wchar_t** devListIDs;
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
 
-UINT8 WASAPI_IsAvailable(void)
+UINT8 lwaodWASAPI_IsAvailable(void)
 {
 	HRESULT retVal;
 	IMMDeviceEnumerator* devEnum;
@@ -135,7 +135,7 @@ UINT8 WASAPI_IsAvailable(void)
 	return resVal;
 }
 
-UINT8 WASAPI_Init(void)
+UINT8 lwaodWASAPI_Init(void)
 {
 	HRESULT retVal;
 	UINT devCount;
@@ -260,7 +260,7 @@ UINT8 WASAPI_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 WASAPI_Deinit(void)
+UINT8 lwaodWASAPI_Deinit(void)
 {
 	UINT32 curDev;
 	
@@ -282,18 +282,18 @@ UINT8 WASAPI_Deinit(void)
 	return LWAO_ERR_OK;
 }
 
-const LWAO_DEV_LIST* WASAPI_GetDeviceList(void)
+const LWAO_DEV_LIST* lwaodWASAPI_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-LWAO_OPTS* WASAPI_GetDefaultOpts(void)
+LWAO_OPTS* lwaodWASAPI_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
 
 
-UINT8 WASAPI_Create(void** retDrvObj)
+UINT8 lwaodWASAPI_Create(void** retDrvObj)
 {
 	DRV_WASAPI* drv;
 	UINT8 retVal8;
@@ -316,7 +316,7 @@ UINT8 WASAPI_Create(void** retDrvObj)
 	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
-		WASAPI_Destroy(drv);
+		lwaodWASAPI_Destroy(drv);
 		*retDrvObj = NULL;
 		return LWAO_ERR_API_ERR;
 	}
@@ -325,12 +325,12 @@ UINT8 WASAPI_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 WASAPI_Destroy(void* drvObj)
+UINT8 lwaodWASAPI_Destroy(void* drvObj)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	
 	if (drv->devState != 0)
-		WASAPI_Stop(drvObj);
+		lwaodWASAPI_Stop(drvObj);
 	if (drv->hThread != NULL)
 	{
 		lwauThread_Cancel(drv->hThread);
@@ -347,7 +347,7 @@ UINT8 WASAPI_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 WASAPI_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+UINT8 lwaodWASAPI_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	UINT64 tempInt64;
@@ -454,7 +454,7 @@ StartErr_DevEnum:
 	return errVal;
 }
 
-UINT8 WASAPI_Stop(void* drvObj)
+UINT8 lwaodWASAPI_Stop(void* drvObj)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	HRESULT retVal;
@@ -480,7 +480,7 @@ UINT8 WASAPI_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 WASAPI_Pause(void* drvObj)
+UINT8 lwaodWASAPI_Pause(void* drvObj)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	HRESULT retVal;
@@ -492,7 +492,7 @@ UINT8 WASAPI_Pause(void* drvObj)
 	return (retVal == S_OK || retVal == S_FALSE) ? LWAO_ERR_OK : 0xFF;
 }
 
-UINT8 WASAPI_Resume(void* drvObj)
+UINT8 lwaodWASAPI_Resume(void* drvObj)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	HRESULT retVal;
@@ -505,7 +505,7 @@ UINT8 WASAPI_Resume(void* drvObj)
 }
 
 
-UINT8 WASAPI_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 lwaodWASAPI_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	
@@ -517,7 +517,7 @@ UINT8 WASAPI_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* u
 	return LWAO_ERR_OK;
 }
 
-UINT32 WASAPI_GetBufferSize(void* drvObj)
+UINT32 lwaodWASAPI_GetBufferSize(void* drvObj)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	
@@ -536,7 +536,7 @@ static UINT32 GetFreeSamples(DRV_WASAPI* drv)
 	return drv->bufFrmCount - paddSmpls;
 }
 
-UINT8 WASAPI_IsBusy(void* drvObj)
+UINT8 lwaodWASAPI_IsBusy(void* drvObj)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	UINT32 freeSmpls;
@@ -548,7 +548,7 @@ UINT8 WASAPI_IsBusy(void* drvObj)
 	return (freeSmpls >= drv->bufSmpls) ? LWAO_ERR_OK : LWAO_ERR_BUSY;
 }
 
-UINT8 WASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data)
+UINT8 lwaodWASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	UINT32 dataSmpls;
@@ -574,7 +574,7 @@ UINT8 WASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 WASAPI_GetLatency(void* drvObj)
+UINT32 lwaodWASAPI_GetLatency(void* drvObj)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)drvObj;
 	REFERENCE_TIME latencyTime;

@@ -27,6 +27,9 @@ TODO ...
 		-e 's,ADRV,LWAO_D,g' \
 		-e 's,AERR,LWAO_ERR,g' \
 		<files>
+	sed -i \
+		-e 's,\<\(ALSA\|CoreAudio\|DSound\|LibAO\|OSS\|Pulse\|SADA\|WASAPI\|WavWrt\|WinMM\|XAudio2\)_,lwaod\1_,g' \
+		<files>
 	```
 - prefix replacement via sed, utility part:
 	```bash

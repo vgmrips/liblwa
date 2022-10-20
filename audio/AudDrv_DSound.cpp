@@ -59,27 +59,27 @@ typedef struct _directsound_driver
 } DRV_DSND;
 
 
-EXT_C UINT8 DSound_IsAvailable(void);
-EXT_C UINT8 DSound_Init(void);
-EXT_C UINT8 DSound_Deinit(void);
-EXT_C const LWAO_DEV_LIST* DSound_GetDeviceList(void);
-EXT_C LWAO_OPTS* DSound_GetDefaultOpts(void);
+EXT_C UINT8 lwaodDSound_IsAvailable(void);
+EXT_C UINT8 lwaodDSound_Init(void);
+EXT_C UINT8 lwaodDSound_Deinit(void);
+EXT_C const LWAO_DEV_LIST* lwaodDSound_GetDeviceList(void);
+EXT_C LWAO_OPTS* lwaodDSound_GetDefaultOpts(void);
 
-EXT_C UINT8 DSound_Create(void** retDrvObj);
-EXT_C UINT8 DSound_Destroy(void* drvObj);
-EXT_C UINT8 DSound_SetHWnd(void* drvObj, HWND hWnd);
-EXT_C UINT8 DSound_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-EXT_C UINT8 DSound_Stop(void* drvObj);
-EXT_C UINT8 DSound_Pause(void* drvObj);
-EXT_C UINT8 DSound_Resume(void* drvObj);
+EXT_C UINT8 lwaodDSound_Create(void** retDrvObj);
+EXT_C UINT8 lwaodDSound_Destroy(void* drvObj);
+EXT_C UINT8 lwaodDSound_SetHWnd(void* drvObj, HWND hWnd);
+EXT_C UINT8 lwaodDSound_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
+EXT_C UINT8 lwaodDSound_Stop(void* drvObj);
+EXT_C UINT8 lwaodDSound_Pause(void* drvObj);
+EXT_C UINT8 lwaodDSound_Resume(void* drvObj);
 
-EXT_C UINT8 DSound_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-EXT_C UINT32 DSound_GetBufferSize(void* drvObj);
+EXT_C UINT8 lwaodDSound_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+EXT_C UINT32 lwaodDSound_GetBufferSize(void* drvObj);
 static UINT32 GetFreeBytes(DRV_DSND* drv);
-EXT_C UINT8 DSound_IsBusy(void* drvObj);
-EXT_C UINT8 DSound_WriteData(void* drvObj, UINT32 dataSize, void* data);
+EXT_C UINT8 lwaodDSound_IsBusy(void* drvObj);
+EXT_C UINT8 lwaodDSound_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
-EXT_C UINT32 DSound_GetLatency(void* drvObj);
+EXT_C UINT32 lwaodDSound_GetLatency(void* drvObj);
 static void DirectSoundThread(void* Arg);
 static UINT8 WriteBuffer(DRV_DSND* drv, UINT32 dataSize, void* data);
 static UINT8 ClearBuffer(DRV_DSND* drv);
@@ -97,18 +97,18 @@ LWAO_DRIVER lwaoDrv_DSound =
 {
 	{LWAO_DTYPE_OUT, LWAO_DSIG_DSOUND, "DirectSound"},
 	
-	DSound_IsAvailable,
-	DSound_Init, DSound_Deinit,
-	DSound_GetDeviceList, DSound_GetDefaultOpts,
+	lwaodDSound_IsAvailable,
+	lwaodDSound_Init, lwaodDSound_Deinit,
+	lwaodDSound_GetDeviceList, lwaodDSound_GetDefaultOpts,
 	
-	DSound_Create, DSound_Destroy,
-	DSound_Start, DSound_Stop,
-	DSound_Pause, DSound_Resume,
+	lwaodDSound_Create, lwaodDSound_Destroy,
+	lwaodDSound_Start, lwaodDSound_Stop,
+	lwaodDSound_Pause, lwaodDSound_Resume,
 	
-	DSound_SetCallback, DSound_GetBufferSize,
-	DSound_IsBusy, DSound_WriteData,
+	lwaodDSound_SetCallback, lwaodDSound_GetBufferSize,
+	lwaodDSound_IsBusy, lwaodDSound_WriteData,
 	
-	DSound_GetLatency,
+	lwaodDSound_GetLatency,
 };
 }	// extern "C"
 
@@ -123,7 +123,7 @@ static UINT32 devLstAlloc;
 static UINT32 devLstCount;
 static DSND_DEVICE* devList;
 
-UINT8 DSound_IsAvailable(void)
+UINT8 lwaodDSound_IsAvailable(void)
 {
 	return 1;
 }
@@ -151,7 +151,7 @@ static BOOL CALLBACK DSEnumCallback(LPGUID lpGuid, LPCSTR lpcstrDescription,
 	return TRUE;
 }
 
-UINT8 DSound_Init(void)
+UINT8 lwaodDSound_Init(void)
 {
 	HRESULT retVal;
 	UINT32 curDev;
@@ -186,7 +186,7 @@ UINT8 DSound_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 DSound_Deinit(void)
+UINT8 lwaodDSound_Deinit(void)
 {
 	UINT32 curDev;
 	DSND_DEVICE* tempDev;
@@ -212,18 +212,18 @@ UINT8 DSound_Deinit(void)
 	return LWAO_ERR_OK;
 }
 
-const LWAO_DEV_LIST* DSound_GetDeviceList(void)
+const LWAO_DEV_LIST* lwaodDSound_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-LWAO_OPTS* DSound_GetDefaultOpts(void)
+LWAO_OPTS* lwaodDSound_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
 
 
-UINT8 DSound_Create(void** retDrvObj)
+UINT8 lwaodDSound_Create(void** retDrvObj)
 {
 	DRV_DSND* drv;
 	UINT8 retVal8;
@@ -244,7 +244,7 @@ UINT8 DSound_Create(void** retDrvObj)
 	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
-		DSound_Destroy(drv);
+		lwaodDSound_Destroy(drv);
 		*retDrvObj = NULL;
 		return LWAO_ERR_API_ERR;
 	}
@@ -253,12 +253,12 @@ UINT8 DSound_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 DSound_Destroy(void* drvObj)
+UINT8 lwaodDSound_Destroy(void* drvObj)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	
 	if (drv->devState != 0)
-		DSound_Stop(drvObj);
+		lwaodDSound_Stop(drvObj);
 	if (drv->hThread != NULL)
 	{
 		lwauThread_Cancel(drv->hThread);
@@ -275,7 +275,7 @@ UINT8 DSound_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 DSound_SetHWnd(void* drvObj, HWND hWnd)
+UINT8 lwaodDSound_SetHWnd(void* drvObj, HWND hWnd)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	
@@ -284,7 +284,7 @@ UINT8 DSound_SetHWnd(void* drvObj, HWND hWnd)
 	return LWAO_ERR_OK;
 }
 
-UINT8 DSound_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+UINT8 lwaodDSound_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	GUID* devGUID;
@@ -376,7 +376,7 @@ UINT8 DSound_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audD
 	return LWAO_ERR_OK;
 }
 
-UINT8 DSound_Stop(void* drvObj)
+UINT8 lwaodDSound_Stop(void* drvObj)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	
@@ -407,7 +407,7 @@ UINT8 DSound_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 DSound_Pause(void* drvObj)
+UINT8 lwaodDSound_Pause(void* drvObj)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	HRESULT retVal;
@@ -419,7 +419,7 @@ UINT8 DSound_Pause(void* drvObj)
 	return (retVal == DS_OK) ? LWAO_ERR_OK : 0xFF;
 }
 
-UINT8 DSound_Resume(void* drvObj)
+UINT8 lwaodDSound_Resume(void* drvObj)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	HRESULT retVal;
@@ -432,7 +432,7 @@ UINT8 DSound_Resume(void* drvObj)
 }
 
 
-UINT8 DSound_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 lwaodDSound_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	
@@ -444,7 +444,7 @@ UINT8 DSound_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* u
 	return LWAO_ERR_OK;
 }
 
-UINT32 DSound_GetBufferSize(void* drvObj)
+UINT32 lwaodDSound_GetBufferSize(void* drvObj)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	
@@ -466,7 +466,7 @@ static UINT32 GetFreeBytes(DRV_DSND* drv)
 		return (drv->bufSize - drv->writePos) + writeEndPos;
 }
 
-UINT8 DSound_IsBusy(void* drvObj)
+UINT8 lwaodDSound_IsBusy(void* drvObj)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	UINT32 freeBytes;
@@ -478,7 +478,7 @@ UINT8 DSound_IsBusy(void* drvObj)
 	return (freeBytes >= drv->bufSegSize) ? LWAO_ERR_OK : LWAO_ERR_BUSY;
 }
 
-UINT8 DSound_WriteData(void* drvObj, UINT32 dataSize, void* data)
+UINT8 lwaodDSound_WriteData(void* drvObj, UINT32 dataSize, void* data)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	UINT32 freeBytes;
@@ -495,7 +495,7 @@ UINT8 DSound_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 DSound_GetLatency(void* drvObj)
+UINT32 lwaodDSound_GetLatency(void* drvObj)
 {
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	UINT32 bytesBehind;

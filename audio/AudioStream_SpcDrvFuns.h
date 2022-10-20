@@ -12,17 +12,17 @@ extern "C"
 
 
 #ifdef LWAO_DRIVER_WAVEWRITE
-UINT8 WavWrt_SetFileName(void* drvObj, const char* fileName);
-const char* WavWrt_GetFileName(void* drvObj);
+UINT8 lwaodWavWrt_SetFileName(void* drvObj, const char* fileName);
+const char* lwaodWavWrt_GetFileName(void* drvObj);
 #endif
 
 #ifdef LWAO_DRIVER_DSOUND
-UINT8 DSound_SetHWnd(void* drvObj, HWND hWnd);
+UINT8 lwaodDSound_SetHWnd(void* drvObj, HWND hWnd);
 #endif
 
 #ifdef LWAO_DRIVER_PULSE
-UINT8 Pulse_SetStreamDesc(void* drvObj, const char* fileName);
-const char* Pulse_GetStreamDesc(void* drvObj);
+UINT8 lwaodPulse_SetStreamDesc(void* drvObj, const char* fileName);
+const char* lwaodPulse_GetStreamDesc(void* drvObj);
 #endif
 
 #ifdef __cplusplus
