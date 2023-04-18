@@ -18,7 +18,7 @@ struct _lwau_signal
 	UINT8 state;	// signal state
 };
 
-UINT8 lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
+UINT8 LWA_API lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
 {
 	LWAU_SIGNAL* sig;
 	int retVal;
@@ -46,7 +46,7 @@ UINT8 lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
 	return 0x00;
 }
 
-void lwauSignal_Deinit(LWAU_SIGNAL* sig)
+void LWA_API lwauSignal_Deinit(LWAU_SIGNAL* sig)
 {
 	pthread_mutex_destroy(&sig->hMutex);
 	pthread_cond_destroy(&sig->hCond);
@@ -56,7 +56,7 @@ void lwauSignal_Deinit(LWAU_SIGNAL* sig)
 	return;
 }
 
-UINT8 lwauSignal_Signal(LWAU_SIGNAL* sig)
+UINT8 LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	
@@ -71,7 +71,7 @@ UINT8 lwauSignal_Signal(LWAU_SIGNAL* sig)
 	return retVal ? 0xFF : 0x00;
 }
 
-UINT8 lwauSignal_Reset(LWAU_SIGNAL* sig)
+UINT8 LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	
@@ -85,7 +85,7 @@ UINT8 lwauSignal_Reset(LWAU_SIGNAL* sig)
 	return 0x00;
 }
 
-UINT8 lwauSignal_Wait(LWAU_SIGNAL* sig)
+UINT8 LWA_API lwauSignal_Wait(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	

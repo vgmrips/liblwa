@@ -15,7 +15,7 @@ struct _lwau_mutex
 	HANDLE hMutex;
 };
 
-UINT8 lwauMutex_Init(LWAU_MUTEX** retMutex, UINT8 initLocked)
+UINT8 LWA_API lwauMutex_Init(LWAU_MUTEX** retMutex, UINT8 initLocked)
 {
 	LWAU_MUTEX* mtx;
 	
@@ -34,7 +34,7 @@ UINT8 lwauMutex_Init(LWAU_MUTEX** retMutex, UINT8 initLocked)
 	return 0x00;
 }
 
-void lwauMutex_Deinit(LWAU_MUTEX* mtx)
+void LWA_API lwauMutex_Deinit(LWAU_MUTEX* mtx)
 {
 	CloseHandle(mtx->hMutex);
 	free(mtx);
@@ -42,7 +42,7 @@ void lwauMutex_Deinit(LWAU_MUTEX* mtx)
 	return;
 }
 
-UINT8 lwauMutex_Lock(LWAU_MUTEX* mtx)
+UINT8 LWA_API lwauMutex_Lock(LWAU_MUTEX* mtx)
 {
 	DWORD retVal;
 	
@@ -53,7 +53,7 @@ UINT8 lwauMutex_Lock(LWAU_MUTEX* mtx)
 		return 0xFF;
 }
 
-UINT8 lwauMutex_TryLock(LWAU_MUTEX* mtx)
+UINT8 LWA_API lwauMutex_TryLock(LWAU_MUTEX* mtx)
 {
 	DWORD retVal;
 	
@@ -66,7 +66,7 @@ UINT8 lwauMutex_TryLock(LWAU_MUTEX* mtx)
 		return 0xFF;
 }
 
-UINT8 lwauMutex_Unlock(LWAU_MUTEX* mtx)
+UINT8 LWA_API lwauMutex_Unlock(LWAU_MUTEX* mtx)
 {
 	BOOL retVal;
 	

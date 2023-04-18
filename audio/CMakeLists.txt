@@ -1,15 +1,22 @@
 #### Audio Output Library ####
-project(lwa-output)
+project(lwa-output LANGUAGES C CXX)
 
 set(LWAO_DEFS)
 set(LWAO_FILES
 	AudioStream.c
 )
+if(MSVC)
+	set(LWAO_FILES ${LWAO_FILES}
+		audio.def
+	)
+endif()
 # export headers
+set(LWAO_EXPORT_HDR "${PROJECT_BINARY_DIR}/lwao_export.h")
 set(LWAO_HEADERS
 	AudioStructs.h
 	AudioStream.h
 	AudioStream_SpcDrvFuns.h
+	${LWAO_EXPORT_HDR}
 )
 set(LWAO_INCLUDES)
 set(LWAO_LIBS)
@@ -148,13 +155,20 @@ endif()
 
 
 add_library(${PROJECT_NAME} ${LIBRARY_TYPE} ${LWAO_FILES})
-set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	POSITION_INDEPENDENT_CODE ON
+	C_VISIBILITY_PRESET hidden
+	CXX_VISIBILITY_PRESET hidden
+	)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${LWAO_DEFS})
 target_include_directories(${PROJECT_NAME}
-	PUBLIC $<BUILD_INTERFACE:${LIBLWA_SOURCE_DIR}> $<INSTALL_INTERFACE:${LIBLWA_INSTALL_INCLUDE_DIR}>
+	PUBLIC $<BUILD_INTERFACE:${LIBLWA_SOURCE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> $<INSTALL_INTERFACE:${LIBLWA_INSTALL_INCLUDE_DIR}>
 	PRIVATE ${LWAO_INCLUDES}
 )
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LWAO_LIBS} lwa-utils)
+generate_export_header(${PROJECT_NAME}
+	BASE_NAME lwao
+	EXPORT_FILE_NAME "${LWAO_EXPORT_HDR}")
 
 if(WIN32)
 	# for some Windows Audio APIs, we need WinAPI headers from special directories
@@ -179,7 +193,7 @@ endif()
 
 pkgcfg_configure("${LIBLWA_SOURCE_DIR}/cmake/package.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
 		NAME "LibLWA Output"
-		DESC "Light-Weight Audio library: output functions"
+		DESC "Light-Weight Audio library: audio output"
 		VERSION ${LIBLWA_VERSION}
 		DEFINES ${LWAO_DEFS}
 		CFLAGS ${LWAO_PC_CFLAGS}

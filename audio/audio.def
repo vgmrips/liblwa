@@ -1,0 +1,25 @@
+; a .def file is required to prevent name mangling with exported _stdcall functions
+EXPORTS
+	lwaoInit
+	lwaoDeinit
+	lwaoGetDriverCount
+	lwaoGetDriverInfo
+	lwaodInit
+	lwaodDeinit
+	lwaodGetDeviceList
+	lwaodGetOptions
+	lwaodGetDrvData
+	lwaodStart
+	lwaodStop
+	lwaodPause
+	lwaodResume
+	lwaodSetCallback
+	lwaodGetBufferSize
+	lwaodIsBusy
+	lwaodWriteData
+	lwaodGetLatency
+	lwaodWavWrt_SetFileName
+	lwaodWavWrt_GetFileName
+	lwaodDSound_SetHWnd
+	;lwaodPulse_SetStreamDesc
+	;lwaodPulse_GetStreamDesc

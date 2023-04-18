@@ -6,23 +6,27 @@ extern "C"
 {
 #endif
 
+#include "../stdtype.h"
+#include "lwao_export.h"
+#include "../lwa_api.h"
+
 #ifdef LWAO_DRIVER_DSOUND
 #include <windows.h>	// for HWND
 #endif
 
 
 #ifdef LWAO_DRIVER_WAVEWRITE
-UINT8 lwaodWavWrt_SetFileName(void* drvObj, const char* fileName);
-const char* lwaodWavWrt_GetFileName(void* drvObj);
+LWAO_EXPORT UINT8 lwaodWavWrt_SetFileName(void* drvObj, const char* fileName);
+LWAO_EXPORT const char* lwaodWavWrt_GetFileName(void* drvObj);
 #endif
 
 #ifdef LWAO_DRIVER_DSOUND
-UINT8 lwaodDSound_SetHWnd(void* drvObj, HWND hWnd);
+LWAO_EXPORT UINT8 lwaodDSound_SetHWnd(void* drvObj, HWND hWnd);
 #endif
 
 #ifdef LWAO_DRIVER_PULSE
-UINT8 lwaodPulse_SetStreamDesc(void* drvObj, const char* fileName);
-const char* lwaodPulse_GetStreamDesc(void* drvObj);
+LWAO_EXPORT UINT8 lwaodPulse_SetStreamDesc(void* drvObj, const char* fileName);
+LWAO_EXPORT const char* lwaodPulse_GetStreamDesc(void* drvObj);
 #endif
 
 #ifdef __cplusplus

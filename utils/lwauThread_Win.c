@@ -20,7 +20,7 @@ struct _lwau_thread
 
 static DWORD WINAPI lwauThread_Main(LPVOID lpParam);
 
-UINT8 lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args)
+UINT8 LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args)
 {
 	LWAU_THREAD* thr;
 	
@@ -49,7 +49,7 @@ static DWORD WINAPI lwauThread_Main(LPVOID lpParam)
 	return 0;
 }
 
-void lwauThread_Deinit(LWAU_THREAD* thr)
+void LWA_API lwauThread_Deinit(LWAU_THREAD* thr)
 {
 	CloseHandle(thr->hThread);
 	free(thr);
@@ -57,7 +57,7 @@ void lwauThread_Deinit(LWAU_THREAD* thr)
 	return;
 }
 
-void lwauThread_Join(LWAU_THREAD* thr)
+void LWA_API lwauThread_Join(LWAU_THREAD* thr)
 {
 	if (! thr->id)
 		return;
@@ -68,7 +68,7 @@ void lwauThread_Join(LWAU_THREAD* thr)
 	return;
 }
 
-void lwauThread_Cancel(LWAU_THREAD* thr)
+void LWA_API lwauThread_Cancel(LWAU_THREAD* thr)
 {
 	BOOL retVal;
 	
@@ -82,12 +82,12 @@ void lwauThread_Cancel(LWAU_THREAD* thr)
 	return;
 }
 
-UINT64 lwauThread_GetID(const LWAU_THREAD* thr)
+UINT64 LWA_API lwauThread_GetID(const LWAU_THREAD* thr)
 {
 	return thr->id;
 }
 
-void* lwauThread_GetHandle(LWAU_THREAD* thr)
+void* LWA_API lwauThread_GetHandle(LWAU_THREAD* thr)
 {
 	return &thr->hThread;
 }

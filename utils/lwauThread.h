@@ -7,16 +7,18 @@ extern "C"
 #endif
 
 #include "../stdtype.h"
+#include "lwau_export.h"
+#include "../lwa_api.h"
 
 typedef struct _lwau_thread LWAU_THREAD;
-typedef void (*LWAU_THR_FUNC)(void* args);
+typedef void (LWA_API *LWAU_THR_FUNC)(void* args);
 
-UINT8 lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args);
-void lwauThread_Deinit(LWAU_THREAD* thr);
-void lwauThread_Join(LWAU_THREAD* thr);
-void lwauThread_Cancel(LWAU_THREAD* thr);
-UINT64 lwauThread_GetID(const LWAU_THREAD* thr);
-void* lwauThread_GetHandle(LWAU_THREAD* thr);	// return a reference to the actual handle
+LWAU_EXPORT UINT8 LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args);
+LWAU_EXPORT void LWA_API lwauThread_Deinit(LWAU_THREAD* thr);
+LWAU_EXPORT void LWA_API lwauThread_Join(LWAU_THREAD* thr);
+LWAU_EXPORT void LWA_API lwauThread_Cancel(LWAU_THREAD* thr);
+LWAU_EXPORT UINT64 LWA_API lwauThread_GetID(const LWAU_THREAD* thr);
+LWAU_EXPORT void* LWA_API lwauThread_GetHandle(LWAU_THREAD* thr);	// return a reference to the actual handle
 
 #ifdef __cplusplus
 }

@@ -60,10 +60,10 @@ UINT32 lwaodPulse_GetBufferSize(void* drvObj);
 UINT8 lwaodPulse_IsBusy(void* drvObj);
 UINT8 lwaodPulse_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
-UINT8 lwaodPulse_SetStreamDesc(void* drvObj, const char* fileName);
-const char* lwaodPulse_GetStreamDesc(void* drvObj);
+LWAO_EXPORT UINT8 lwaodPulse_SetStreamDesc(void* drvObj, const char* fileName);
+LWAO_EXPORT const char* lwaodPulse_GetStreamDesc(void* drvObj);
 UINT32 lwaodPulse_GetLatency(void* drvObj);
-static void PulseThread(void* Arg);
+static void LWA_API PulseThread(void* Arg);
 
 
 LWAO_DRIVER lwaoDrv_Pulse =
@@ -363,7 +363,7 @@ UINT32 lwaodPulse_GetLatency(void* drvObj)
 	return (UINT32)(pa_simple_get_latency(drv->hPulse, NULL) / 1000);
 }
 
-static void PulseThread(void* Arg)
+static void LWA_API PulseThread(void* Arg)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)Arg;
 	UINT32 didBuffers;	// number of processed buffers

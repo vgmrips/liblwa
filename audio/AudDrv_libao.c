@@ -73,7 +73,7 @@ UINT8 lwaodLibAO_IsBusy(void* drvObj);
 UINT8 lwaodLibAO_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
 UINT32 lwaodLibAO_GetLatency(void* drvObj);
-static void AoThread(void* Arg);
+static void LWA_API AoThread(void* Arg);
 
 
 LWAO_DRIVER lwaoDrv_LibAO =
@@ -368,7 +368,7 @@ UINT32 lwaodLibAO_GetLatency(void* drvObj)
 	return 0;	// There's no API call that lets you receive the current latency.
 }
 
-static void AoThread(void* Arg)
+static void LWA_API AoThread(void* Arg)
 {
 	DRV_AO* drv = (DRV_AO*)Arg;
 	UINT32 didBuffers;	// number of processed buffers

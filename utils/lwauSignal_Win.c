@@ -15,7 +15,7 @@ struct _lwau_signal
 	HANDLE hEvent;
 };
 
-UINT8 lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
+UINT8 LWA_API lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
 {
 	LWAU_SIGNAL* sig;
 	
@@ -34,7 +34,7 @@ UINT8 lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
 	return 0x00;
 }
 
-void lwauSignal_Deinit(LWAU_SIGNAL* sig)
+void LWA_API lwauSignal_Deinit(LWAU_SIGNAL* sig)
 {
 	CloseHandle(sig->hEvent);
 	free(sig);
@@ -42,7 +42,7 @@ void lwauSignal_Deinit(LWAU_SIGNAL* sig)
 	return;
 }
 
-UINT8 lwauSignal_Signal(LWAU_SIGNAL* sig)
+UINT8 LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
 {
 	BOOL retVal;
 	
@@ -50,7 +50,7 @@ UINT8 lwauSignal_Signal(LWAU_SIGNAL* sig)
 	return retVal ? 0x00 : 0xFF;
 }
 
-UINT8 lwauSignal_Reset(LWAU_SIGNAL* sig)
+UINT8 LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
 {
 	BOOL retVal;
 	
@@ -58,7 +58,7 @@ UINT8 lwauSignal_Reset(LWAU_SIGNAL* sig)
 	return retVal ? 0x00 : 0xFF;
 }
 
-UINT8 lwauSignal_Wait(LWAU_SIGNAL* sig)
+UINT8 LWA_API lwauSignal_Wait(LWAU_SIGNAL* sig)
 {
 	DWORD retVal;
 	

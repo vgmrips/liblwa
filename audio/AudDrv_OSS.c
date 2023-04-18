@@ -89,7 +89,7 @@ UINT8 lwaodOSS_IsBusy(void* drvObj);
 UINT8 lwaodOSS_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
 UINT32 lwaodOSS_GetLatency(void* drvObj);
-static void OssThread(void* Arg);
+static void LWA_API OssThread(void* Arg);
 
 
 LWAO_DRIVER lwaoDrv_OSS =
@@ -456,7 +456,7 @@ UINT32 lwaodOSS_GetLatency(void* drvObj)
 	return bytesBehind * 1000 / drv->waveFmt.nAvgBytesPerSec;
 }
 
-static void OssThread(void* Arg)
+static void LWA_API OssThread(void* Arg)
 {
 	DRV_OSS* drv = (DRV_OSS*)Arg;
 	UINT32 didBuffers;	// number of processed buffers

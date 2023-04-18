@@ -81,7 +81,7 @@ UINT8 lwaodWinMM_IsBusy(void* drvObj);
 UINT8 lwaodWinMM_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
 UINT32 lwaodWinMM_GetLatency(void* drvObj);
-static void WaveOutThread(void* Arg);
+static void LWA_API WaveOutThread(void* Arg);
 static void WriteBuffer(DRV_WINMM* drv, WAVEHDR* wHdr);
 static void BufCheck(DRV_WINMM* drv);
 
@@ -466,7 +466,7 @@ UINT32 lwaodWinMM_GetLatency(void* drvObj)
 	return smplsBehind * 1000 / drv->waveFmt.nSamplesPerSec;
 }
 
-static void WaveOutThread(void* Arg)
+static void LWA_API WaveOutThread(void* Arg)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)Arg;
 	UINT32 curBuf;

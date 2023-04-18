@@ -1,0 +1,18 @@
+; a .def file is required to prevent name mangling with exported _stdcall functions
+EXPORTS
+	lwauMutex_Init
+	lwauMutex_Deinit
+	lwauMutex_Lock
+	lwauMutex_TryLock
+	lwauMutex_Unlock
+	lwauSignal_Init
+	lwauSignal_Deinit
+	lwauSignal_Signal
+	lwauSignal_Reset
+	lwauSignal_Wait
+	lwauThread_Init
+	lwauThread_Deinit
+	lwauThread_Join
+	lwauThread_Cancel
+	lwauThread_GetID
+	lwauThread_GetHandle

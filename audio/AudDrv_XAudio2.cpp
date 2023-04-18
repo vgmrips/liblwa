@@ -71,7 +71,7 @@ EXT_C UINT8 lwaodXAudio2_IsBusy(void* drvObj);
 EXT_C UINT8 lwaodXAudio2_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
 EXT_C UINT32 lwaodXAudio2_GetLatency(void* drvObj);
-static void XAudio2Thread(void* Arg);
+static void LWA_API XAudio2Thread(void* Arg);
 
 
 extern "C"
@@ -480,7 +480,7 @@ UINT32 lwaodXAudio2_GetLatency(void* drvObj)
 	return bytesBehind * 1000 / drv->waveFmt.nAvgBytesPerSec;
 }
 
-static void XAudio2Thread(void* Arg)
+static void LWA_API XAudio2Thread(void* Arg)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)Arg;
 	XAUDIO2_VOICE_STATE xaVocState;

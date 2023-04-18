@@ -22,7 +22,7 @@ struct _lwau_thread
 
 static void* lwauThread_Main(void* param);
 
-UINT8 lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args)
+UINT8 LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args)
 {
 	LWAU_THREAD* thr;
 	int retVal;
@@ -52,7 +52,7 @@ static void* lwauThread_Main(void* param)
 	return 0;
 }
 
-void lwauThread_Deinit(LWAU_THREAD* thr)
+void LWA_API lwauThread_Deinit(LWAU_THREAD* thr)
 {
 	if (thr->id)
 		pthread_detach(thr->id);	// release handle
@@ -61,7 +61,7 @@ void lwauThread_Deinit(LWAU_THREAD* thr)
 	return;
 }
 
-void lwauThread_Join(LWAU_THREAD* thr)
+void LWA_API lwauThread_Join(LWAU_THREAD* thr)
 {
 	if (! thr->id)
 		return;
@@ -72,7 +72,7 @@ void lwauThread_Join(LWAU_THREAD* thr)
 	return;
 }
 
-void lwauThread_Cancel(LWAU_THREAD* thr)
+void LWA_API lwauThread_Cancel(LWAU_THREAD* thr)
 {
 	int retVal;
 	
@@ -86,7 +86,7 @@ void lwauThread_Cancel(LWAU_THREAD* thr)
 	return;
 }
 
-UINT64 lwauThread_GetID(const LWAU_THREAD* thr)
+UINT64 LWA_API lwauThread_GetID(const LWAU_THREAD* thr)
 {
 #ifdef __APPLE__
 	UINT64 idNum;
@@ -99,7 +99,7 @@ UINT64 lwauThread_GetID(const LWAU_THREAD* thr)
 #endif
 }
 
-void* lwauThread_GetHandle(LWAU_THREAD* thr)
+void* LWA_API lwauThread_GetHandle(LWAU_THREAD* thr)
 {
 	return &thr->id;
 }

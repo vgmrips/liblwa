@@ -74,7 +74,7 @@ EXT_C UINT8 lwaodWASAPI_IsBusy(void* drvObj);
 EXT_C UINT8 lwaodWASAPI_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
 EXT_C UINT32 lwaodWASAPI_GetLatency(void* drvObj);
-static void WasapiThread(void* Arg);
+static void LWA_API WasapiThread(void* Arg);
 
 
 extern "C"
@@ -587,7 +587,7 @@ UINT32 lwaodWASAPI_GetLatency(void* drvObj)
 	return (UINT32)((latencyTime + 5000) / 10000);	// 100 ns steps -> 1 ms steps
 }
 
-static void WasapiThread(void* Arg)
+static void LWA_API WasapiThread(void* Arg)
 {
 	DRV_WASAPI* drv = (DRV_WASAPI*)Arg;
 	UINT32 didBuffers;	// number of processed buffers

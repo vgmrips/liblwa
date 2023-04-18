@@ -1,9 +1,17 @@
 #### miscellaneous utility functions/classes ####
-project(lwa-utils)
+project(lwa-utils LANGUAGES C CXX)
 
 set(UTIL_DEFS)
 set(UTIL_FILES)
-set(UTIL_HEADERS)	# export headers
+if(MSVC)
+	set(UTIL_FILES ${UTIL_FILES}
+		utils.def
+	)
+endif()
+set(UTIL_EXPORT_HDR "${PROJECT_BINARY_DIR}/lwau_export.h")
+set(UTIL_HEADERS	# export headers
+	${UTIL_EXPORT_HDR}
+)
 set(UTIL_INCLUDES)
 set(UTIL_LIBS)
 set(UTIL_DEPS)	# dependencies for CMake Config file
@@ -11,7 +19,6 @@ set(UTIL_DEPS)	# dependencies for CMake Config file
 set(UTIL_PC_CFLAGS)
 set(UTIL_PC_LDFLAGS)
 set(UTIL_PC_PKGS)
-
 
 
 # Threads and Synchronization
@@ -43,13 +50,20 @@ set(UTIL_PC_LDFLAGS ${UTIL_PC_LDFLAGS} ${CMAKE_THREAD_LIBS_INIT})
 
 
 add_library(${PROJECT_NAME} ${LIBRARY_TYPE} ${UTIL_FILES})
-set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	POSITION_INDEPENDENT_CODE ON
+	C_VISIBILITY_PRESET hidden
+	CXX_VISIBILITY_PRESET hidden
+	)
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${UTIL_DEFS})
 target_include_directories(${PROJECT_NAME}
-	PUBLIC $<BUILD_INTERFACE:${LIBLWA_SOURCE_DIR}> $<INSTALL_INTERFACE:${LIBLWA_INSTALL_INCLUDE_DIR}>
+	PUBLIC $<BUILD_INTERFACE:${LIBLWA_SOURCE_DIR}> $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}> $<INSTALL_INTERFACE:${LIBLWA_INSTALL_INCLUDE_DIR}>
 	PRIVATE ${UTIL_INCLUDES}
 )
 target_link_libraries(${PROJECT_NAME} PUBLIC ${UTIL_LIBS})
+generate_export_header(${PROJECT_NAME}
+	BASE_NAME lwau
+	EXPORT_FILE_NAME "${UTIL_EXPORT_HDR}")
 
 
 pkgcfg_configure("${LIBLWA_SOURCE_DIR}/cmake/package.pc.in" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"

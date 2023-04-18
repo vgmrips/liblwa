@@ -67,7 +67,7 @@ EXT_C LWAO_OPTS* lwaodDSound_GetDefaultOpts(void);
 
 EXT_C UINT8 lwaodDSound_Create(void** retDrvObj);
 EXT_C UINT8 lwaodDSound_Destroy(void* drvObj);
-EXT_C UINT8 lwaodDSound_SetHWnd(void* drvObj, HWND hWnd);
+EXT_C LWAO_EXPORT UINT8 lwaodDSound_SetHWnd(void* drvObj, HWND hWnd);
 EXT_C UINT8 lwaodDSound_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
 EXT_C UINT8 lwaodDSound_Stop(void* drvObj);
 EXT_C UINT8 lwaodDSound_Pause(void* drvObj);
@@ -80,7 +80,7 @@ EXT_C UINT8 lwaodDSound_IsBusy(void* drvObj);
 EXT_C UINT8 lwaodDSound_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
 EXT_C UINT32 lwaodDSound_GetLatency(void* drvObj);
-static void DirectSoundThread(void* Arg);
+static void LWA_API DirectSoundThread(void* Arg);
 static UINT8 WriteBuffer(DRV_DSND* drv, UINT32 dataSize, void* data);
 static UINT8 ClearBuffer(DRV_DSND* drv);
 
@@ -517,7 +517,7 @@ UINT32 lwaodDSound_GetLatency(void* drvObj)
 	return bytesBehind * 1000 / drv->waveFmt.nAvgBytesPerSec;
 }
 
-static void DirectSoundThread(void* Arg)
+static void LWA_API DirectSoundThread(void* Arg)
 {
 	DRV_DSND* drv = (DRV_DSND*)Arg;
 	UINT32 wrtBytes;

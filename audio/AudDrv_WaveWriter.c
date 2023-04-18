@@ -51,8 +51,8 @@ LWAO_OPTS* lwaodWavWrt_GetDefaultOpts(void);
 
 UINT8 lwaodWavWrt_Create(void** retDrvObj);
 UINT8 lwaodWavWrt_Destroy(void* drvObj);
-UINT8 lwaodWavWrt_SetFileName(void* drvObj, const char* fileName);
-const char* lwaodWavWrt_GetFileName(void* drvObj);
+LWAO_EXPORT UINT8 lwaodWavWrt_SetFileName(void* drvObj, const char* fileName);
+LWAO_EXPORT const char* lwaodWavWrt_GetFileName(void* drvObj);
 
 UINT8 lwaodWavWrt_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
 UINT8 lwaodWavWrt_Stop(void* drvObj);

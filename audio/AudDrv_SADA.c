@@ -79,7 +79,7 @@ UINT8 lwaodSADA_IsBusy(void* drvObj);
 UINT8 lwaodSADA_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
 UINT32 lwaodSADA_GetLatency(void* drvObj);
-static void SadaThread(void* Arg);
+static void LWA_API SadaThread(void* Arg);
 
 
 LWAO_DRIVER lwaoDrv_SADA =
@@ -404,7 +404,7 @@ UINT32 lwaodSADA_GetLatency(void* drvObj)
 	return bytesBehind * 1000 / drv->waveFmt.nAvgBytesPerSec;
 }
 
-static void SadaThread(void* Arg)
+static void LWA_API SadaThread(void* Arg)
 {
 	DRV_SADA* drv = (DRV_SADA*)Arg;
 	UINT32 didBuffers;	// number of processed buffers

@@ -73,7 +73,7 @@ UINT8 lwaodALSA_IsBusy(void* drvObj);
 UINT8 lwaodALSA_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
 UINT32 lwaodALSA_GetLatency(void* drvObj);
-static void AlsaThread(void* Arg);
+static void LWA_API AlsaThread(void* Arg);
 static UINT8 WriteBuffer(DRV_ALSA* drv, UINT32 dataSize, void* data);
 
 
@@ -441,7 +441,7 @@ UINT32 lwaodALSA_GetLatency(void* drvObj)
 	return smplsBehind * 1000 / drv->waveFmt.nSamplesPerSec;
 }
 
-static void AlsaThread(void* Arg)
+static void LWA_API AlsaThread(void* Arg)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)Arg;
 	UINT32 bufBytes;
