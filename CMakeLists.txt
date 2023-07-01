@@ -126,14 +126,7 @@ endif(USE_SANITIZERS)
 
 # --- additional stuff ---
 if(BUILD_EXAMPLES)
-
-add_executable(audiotest examples/audiotest.c)
-target_link_libraries(audiotest PRIVATE lwa-output)
-if(USE_SANITIZERS)
-	add_sanitizers(audiotest)
-endif(USE_SANITIZERS)
-
-install(TARGETS audiotest DESTINATION "${CMAKE_INSTALL_BINDIR}")
+	add_subdirectory(examples)
 endif(BUILD_EXAMPLES)
 
 set(COMMON_HEADERS
