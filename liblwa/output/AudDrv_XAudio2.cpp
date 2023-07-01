@@ -18,7 +18,7 @@
 
 #include "../stdtype.h"
 
-#include "AudioStream.h"
+#include "lwao.h"
 #include "../utils/lwauThread.h"
 #include "../utils/lwauSignal.h"
 #include "../utils/lwauMutex.h"

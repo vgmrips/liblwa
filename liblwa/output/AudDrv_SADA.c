@@ -1,18 +1,22 @@
-// Audio Stream - libao
-//	- libao
+// Audio Stream - Solaris Audio Device Architecture
+#define ENABLE_SADA_THREAD
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include <ao/ao.h>
+#include <fcntl.h>	// for open() constants
+#include <unistd.h>	// for I/O calls
+#include <sys/audioio.h>
 
+#ifdef ENABLE_SADA_THREAD
 #include <unistd.h>		// for usleep()
 #define	Sleep(msec)	usleep(msec * 1000)
+#endif
 
 #include "../stdtype.h"
 
-#include "AudioStream.h"
+#include "lwao.h"
 #include "../utils/lwauThread.h"
 #include "../utils/lwauSignal.h"
 #include "../utils/lwauMutex.h"
@@ -31,7 +35,7 @@ typedef struct
 #define WAVE_FORMAT_PCM	0x0001
 
 
-typedef struct _libao_driver
+typedef struct _sada_driver
 {
 	void* audDrvPtr;
 	volatile UINT8 devState;	// 0 - not running, 1 - running, 2 - terminating
@@ -42,84 +46,87 @@ typedef struct _libao_driver
 	UINT32 bufCount;
 	UINT8* bufSpace;
 	
+#ifdef ENABLE_SADA_THREAD
 	LWAU_THREAD* hThread;
+#endif
 	LWAU_SIGNAL* hSignal;
 	LWAU_MUTEX* hMutex;
-	ao_device* hDevAO;
+	int hFileDSP;
 	volatile UINT8 pauseThread;
 	
 	void* userParam;
 	LWAOFUNC_FILLBUF FillBuffer;
-	ao_sample_format aoParams;
-} DRV_AO;
+	struct audio_info sadaParams;
+} DRV_SADA;
 
 
-UINT8 lwaodLibAO_IsAvailable(void);
-UINT8 lwaodLibAO_Init(void);
-UINT8 lwaodLibAO_Deinit(void);
-const LWAO_DEV_LIST* lwaodLibAO_GetDeviceList(void);
-LWAO_OPTS* lwaodLibAO_GetDefaultOpts(void);
+UINT8 lwaodSADA_IsAvailable(void);
+UINT8 lwaodSADA_Init(void);
+UINT8 lwaodSADA_Deinit(void);
+const LWAO_DEV_LIST* lwaodSADA_GetDeviceList(void);
+LWAO_OPTS* lwaodSADA_GetDefaultOpts(void);
 
-UINT8 lwaodLibAO_Create(void** retDrvObj);
-UINT8 lwaodLibAO_Destroy(void* drvObj);
-UINT8 lwaodLibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 lwaodLibAO_Stop(void* drvObj);
-UINT8 lwaodLibAO_Pause(void* drvObj);
-UINT8 lwaodLibAO_Resume(void* drvObj);
+UINT8 lwaodSADA_Create(void** retDrvObj);
+UINT8 lwaodSADA_Destroy(void* drvObj);
+UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
+UINT8 lwaodSADA_Stop(void* drvObj);
+UINT8 lwaodSADA_Pause(void* drvObj);
+UINT8 lwaodSADA_Resume(void* drvObj);
 
-UINT8 lwaodLibAO_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 lwaodLibAO_GetBufferSize(void* drvObj);
-UINT8 lwaodLibAO_IsBusy(void* drvObj);
-UINT8 lwaodLibAO_WriteData(void* drvObj, UINT32 dataSize, void* data);
+UINT8 lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+UINT32 lwaodSADA_GetBufferSize(void* drvObj);
+UINT8 lwaodSADA_IsBusy(void* drvObj);
+UINT8 lwaodSADA_WriteData(void* drvObj, UINT32 dataSize, void* data);
 
-UINT32 lwaodLibAO_GetLatency(void* drvObj);
-static void LWA_API AoThread(void* Arg);
+UINT32 lwaodSADA_GetLatency(void* drvObj);
+static void LWA_API SadaThread(void* Arg);
 
 
-LWAO_DRIVER lwaoDrv_LibAO =
+LWAO_DRIVER lwaoDrv_SADA =
 {
-	{LWAO_DTYPE_OUT, LWAO_DSIG_LIBAO, "libao"},
+	{LWAO_DTYPE_OUT, LWAO_DSIG_SADA, "SADA"},
 	
-	lwaodLibAO_IsAvailable,
-	lwaodLibAO_Init, lwaodLibAO_Deinit,
-	lwaodLibAO_GetDeviceList, lwaodLibAO_GetDefaultOpts,
+	lwaodSADA_IsAvailable,
+	lwaodSADA_Init, lwaodSADA_Deinit,
+	lwaodSADA_GetDeviceList, lwaodSADA_GetDefaultOpts,
 	
-	lwaodLibAO_Create, lwaodLibAO_Destroy,
-	lwaodLibAO_Start, lwaodLibAO_Stop,
-	lwaodLibAO_Pause, lwaodLibAO_Resume,
+	lwaodSADA_Create, lwaodSADA_Destroy,
+	lwaodSADA_Start, lwaodSADA_Stop,
+	lwaodSADA_Pause, lwaodSADA_Resume,
 	
-	lwaodLibAO_SetCallback, lwaodLibAO_GetBufferSize,
-	lwaodLibAO_IsBusy, lwaodLibAO_WriteData,
+	lwaodSADA_SetCallback, lwaodSADA_GetBufferSize,
+	lwaodSADA_IsBusy, lwaodSADA_WriteData,
 	
-	lwaodLibAO_GetLatency,
+	lwaodSADA_GetLatency,
 };
 
 
-static char* aoDevNames[1] = {"default"};
+static char* ossDevNames[1] = {"/dev/audio"};
 static LWAO_OPTS defOptions;
 static LWAO_DEV_LIST deviceList;
 
 static UINT8 isInit = 0;
 static UINT32 activeDrivers;
 
-UINT8 lwaodLibAO_IsAvailable(void)
+UINT8 lwaodSADA_IsAvailable(void)
 {
+	int hFile;
+	
+	hFile = open(ossDevNames[0], O_WRONLY);
+	if (hFile < 0)
+		return 0;
+	close(hFile);
+	
 	return 1;
 }
 
-UINT8 lwaodLibAO_Init(void)
+UINT8 lwaodSADA_Init(void)
 {
-	// TODO: generate a list of all libao drivers
-	//UINT32 numDevs;
-	//UINT32 curDev;
-	//UINT32 devLstID;
-	
 	if (isInit)
 		return LWAO_ERR_WASDONE;
 	
-	ao_initialize();
 	deviceList.devCount = 1;
-	deviceList.devNames = aoDevNames;
+	deviceList.devNames = ossDevNames;
 	
 	
 	memset(&defOptions, 0x00, sizeof(LWAO_OPTS));
@@ -136,43 +143,41 @@ UINT8 lwaodLibAO_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodLibAO_Deinit(void)
+UINT8 lwaodSADA_Deinit(void)
 {
-	//UINT32 curDev;
-	
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
 	
 	deviceList.devCount = 0;
 	deviceList.devNames = NULL;
 	
-	ao_shutdown();
-	
 	isInit = 0;
 	
 	return LWAO_ERR_OK;
 }
 
-const LWAO_DEV_LIST* lwaodLibAO_GetDeviceList(void)
+const LWAO_DEV_LIST* lwaodSADA_GetDeviceList(void)
 {
 	return &deviceList;
 }
 
-LWAO_OPTS* lwaodLibAO_GetDefaultOpts(void)
+LWAO_OPTS* lwaodSADA_GetDefaultOpts(void)
 {
 	return &defOptions;
 }
 
 
-UINT8 lwaodLibAO_Create(void** retDrvObj)
+UINT8 lwaodSADA_Create(void** retDrvObj)
 {
-	DRV_AO* drv;
+	DRV_SADA* drv;
 	UINT8 retVal8;
 	
-	drv = (DRV_AO*)malloc(sizeof(DRV_AO));
+	drv = (DRV_SADA*)malloc(sizeof(DRV_SADA));
 	drv->devState = 0;
-	drv->hDevAO = NULL;
+	drv->hFileDSP = 0;
+#ifdef ENABLE_SADA_THREAD
 	drv->hThread = NULL;
+#endif
 	drv->hSignal = NULL;
 	drv->hMutex = NULL;
 	drv->userParam = NULL;
@@ -183,7 +188,7 @@ UINT8 lwaodLibAO_Create(void** retDrvObj)
 	retVal8 |= lwauMutex_Init(&drv->hMutex, 0);
 	if (retVal8)
 	{
-		lwaodLibAO_Destroy(drv);
+		lwaodSADA_Destroy(drv);
 		*retDrvObj = NULL;
 		return LWAO_ERR_API_ERR;
 	}
@@ -192,17 +197,19 @@ UINT8 lwaodLibAO_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodLibAO_Destroy(void* drvObj)
+UINT8 lwaodSADA_Destroy(void* drvObj)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
 	if (drv->devState != 0)
-		lwaodLibAO_Stop(drvObj);
+		lwaodSADA_Stop(drvObj);
+#ifdef ENABLE_SADA_THREAD
 	if (drv->hThread != NULL)
 	{
 		lwauThread_Cancel(drv->hThread);
 		lwauThread_Deinit(drv->hThread);
 	}
+#endif
 	if (drv->hSignal != NULL)
 		lwauSignal_Deinit(drv->hSignal);
 	if (drv->hMutex != NULL)
@@ -214,12 +221,14 @@ UINT8 lwaodLibAO_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodLibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	UINT64 tempInt64;
 	int retVal;
+#ifdef ENABLE_OSS_THREAD
 	UINT8 retVal8;
+#endif
 	
 	if (drv->devState != 0)
 		return 0xD0;	// already running
@@ -239,24 +248,37 @@ UINT8 lwaodLibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* 
 	drv->bufSize = drv->waveFmt.nBlockAlign * drv->bufSmpls;
 	drv->bufCount = options->numBuffers ? options->numBuffers : 10;
 	
-	drv->aoParams.bits = drv->waveFmt.wBitsPerSample;
-	drv->aoParams.rate = drv->waveFmt.nSamplesPerSec;
-	drv->aoParams.channels = drv->waveFmt.nChannels;
-	drv->aoParams.byte_format = AO_FMT_NATIVE;
-	drv->aoParams.matrix = NULL;
+	LWAO_INITINFO(&drv->sadaParams);
+	drv->sadaParams.mode = AUMODE_PLAY;
+	drv->sadaParams.play.sample_rate = drv->waveFmt.nSamplesPerSec;
+	drv->sadaParams.play.channels = drv->waveFmt.nChannels;
+	drv->sadaParams.play.precision = drv->waveFmt.wBitsPerSample;
+	if (drv->waveFmt.wBitsPerSample == 8)
+		drv->sadaParams.play.encoding = LWAO_ENCODING_ULINEAR;
+	else
+		drv->sadaParams.play.encoding = LWAO_ENCODING_SLINEAR;
 	
-	drv->hDevAO = ao_open_live(ao_default_driver_id(), &drv->aoParams, NULL);
-	if (drv->hDevAO == NULL)
+	drv->hFileDSP = open(ossDevNames[0], O_WRONLY);
+	if (drv->hFileDSP < 0)
+	{
+		drv->hFileDSP = 0;
 		return 0xC0;		// open() failed
+	}
+	
+	retVal = ioctl(drv->hFileDSP, LWAO_SETINFO, &drv->sadaParams);
+	if (retVal)
+		printf("Error setting audio information!\n");
 	
 	lwauSignal_Reset(drv->hSignal);
-	retVal8 = lwauThread_Init(&drv->hThread, &AoThread, drv);
+#ifdef ENABLE_SADA_THREAD
+	retVal8 = lwauThread_Init(&drv->hThread, &SadaThread, drv);
 	if (retVal8)
 	{
-		retVal = ao_close(drv->hDevAO);
-		drv->hDevAO = NULL;
+		retVal = close(drv->hFileDSP);
+		drv->hFileDSP = 0;
 		return 0xC8;	// CreateThread failed
 	}
+#endif
 	
 	drv->bufSpace = (UINT8*)malloc(drv->bufSize);
 	
@@ -267,9 +289,9 @@ UINT8 lwaodLibAO_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* 
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodLibAO_Stop(void* drvObj)
+UINT8 lwaodSADA_Stop(void* drvObj)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	int retVal;
 	
 	if (drv->devState != 1)
@@ -277,36 +299,38 @@ UINT8 lwaodLibAO_Stop(void* drvObj)
 	
 	drv->devState = 2;
 	
+#ifdef ENABLE_SADA_THREAD
 	lwauThread_Join(drv->hThread);
 	lwauThread_Deinit(drv->hThread);	drv->hThread = NULL;
+#endif
 	
 	free(drv->bufSpace);	drv->bufSpace = NULL;
 	
-	retVal = ao_close(drv->hDevAO);
-	if (! retVal)
+	retVal = close(drv->hFileDSP);
+	if (retVal)
 		return 0xC4;		// close failed -- but why ???
-	drv->hDevAO = NULL;
+	drv->hFileDSP = 0;
 	drv->devState = 0;
 	
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodLibAO_Pause(void* drvObj)
+UINT8 lwaodSADA_Pause(void* drvObj)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
-	if (drv->hDevAO == NULL)
+	if (! drv->hFileDSP)
 		return 0xFF;
 	
 	drv->pauseThread |= 0x01;
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodLibAO_Resume(void* drvObj)
+UINT8 lwaodSADA_Resume(void* drvObj)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
-	if (drv->hDevAO == NULL)
+	if (! drv->hFileDSP)
 		return 0xFF;
 	
 	drv->pauseThread &= ~0x01;
@@ -314,10 +338,11 @@ UINT8 lwaodLibAO_Resume(void* drvObj)
 }
 
 
-UINT8 lwaodLibAO_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+UINT8 lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
+#ifdef ENABLE_SADA_THREAD
 	drv->pauseThread |= 0x02;
 	lwauMutex_Lock(drv->hMutex);
 	drv->userParam = userParam;
@@ -326,18 +351,21 @@ UINT8 lwaodLibAO_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, voi
 	lwauMutex_Unlock(drv->hMutex);
 	
 	return LWAO_ERR_OK;
+#else
+	return LWAO_ERR_NO_SUPPORT;
+#endif
 }
 
-UINT32 lwaodLibAO_GetBufferSize(void* drvObj)
+UINT32 lwaodSADA_GetBufferSize(void* drvObj)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 lwaodLibAO_IsBusy(void* drvObj)
+UINT8 lwaodSADA_IsBusy(void* drvObj)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
 	if (drv->FillBuffer != NULL)
 		return LWAO_ERR_BAD_MODE;
@@ -346,34 +374,42 @@ UINT8 lwaodLibAO_IsBusy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodLibAO_WriteData(void* drvObj, UINT32 dataSize, void* data)
+UINT8 lwaodSADA_WriteData(void* drvObj, UINT32 dataSize, void* data)
 {
-	DRV_AO* drv = (DRV_AO*)drvObj;
-	int retVal;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
+	ssize_t wrtBytes;
 	
 	if (dataSize > drv->bufSize)
 		return LWAO_ERR_TOO_MUCH_DATA;
 	
-	retVal = ao_play(drv->hDevAO, data, dataSize);
-	if (! retVal)
+	wrtBytes = write(drv->hFileDSP, data, dataSize);
+	if (wrtBytes == -1)
 		return 0xFF;
 	return LWAO_ERR_OK;
 }
 
 
-UINT32 lwaodLibAO_GetLatency(void* drvObj)
+UINT32 lwaodSADA_GetLatency(void* drvObj)
 {
-	//DRV_AO* drv = (DRV_AO*)drvObj;
+	DRV_SADA* drv = (DRV_SADA*)drvObj;
+	int retVal;
+	int bytesBehind;
 	
-	return 0;	// There's no API call that lets you receive the current latency.
+	// TODO: Find out what the Output-Delay call for SADA is.
+//	retVal = ioctl(drv->hFileDSP, SNDCTL_DSP_GETODELAY, &bytesBehind);
+//	if (retVal)
+//		return 0;
+	bytesBehind = 0;
+	
+	return bytesBehind * 1000 / drv->waveFmt.nAvgBytesPerSec;
 }
 
-static void LWA_API AoThread(void* Arg)
+static void LWA_API SadaThread(void* Arg)
 {
-	DRV_AO* drv = (DRV_AO*)Arg;
+	DRV_SADA* drv = (DRV_SADA*)Arg;
 	UINT32 didBuffers;	// number of processed buffers
 	UINT32 bufBytes;
-	int retVal;
+	ssize_t wrtBytes;
 	
 	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done
 	
@@ -384,7 +420,7 @@ static void LWA_API AoThread(void* Arg)
 		if (! drv->pauseThread && drv->FillBuffer != NULL)
 		{
 			bufBytes = drv->FillBuffer(drv->audDrvPtr, drv->userParam, drv->bufSize, drv->bufSpace);
-			retVal = ao_play(drv->hDevAO, (char*)drv->bufSpace, bufBytes);
+			wrtBytes = write(drv->hFileDSP, drv->bufSpace, bufBytes);
 			didBuffers ++;
 		}
 		lwauMutex_Unlock(drv->hMutex);

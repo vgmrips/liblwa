@@ -3,19 +3,19 @@ project(lwa-output LANGUAGES C CXX)
 
 set(LWAO_DEFS)
 set(LWAO_FILES
-	AudioStream.c
+	lwao.c
 )
 if(MSVC)
 	set(LWAO_FILES ${LWAO_FILES}
-		audio.def
+		lwa-output.def
 	)
 endif()
 # export headers
 set(LWAO_EXPORT_HDR "${PROJECT_BINARY_DIR}/lwao_export.h")
 set(LWAO_HEADERS
-	AudioStructs.h
-	AudioStream.h
-	AudioStream_SpcDrvFuns.h
+	lwao_structs.h
+	lwao.h
+	lwao_drvfuncs.h
 	${LWAO_EXPORT_HDR}
 )
 set(LWAO_INCLUDES)
@@ -210,6 +210,6 @@ install(TARGETS ${PROJECT_NAME}
 		ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
 	)
 set(LIBLWA_INSTALL_TARGETS ${LIBLWA_INSTALL_TARGETS} "${PROJECT_NAME}" PARENT_SCOPE)
-install(FILES ${LWAO_HEADERS} DESTINATION "${LIBLWA_INSTALL_INCLUDE_DIR}/audio")
+install(FILES ${LWAO_HEADERS} DESTINATION "${LIBLWA_INSTALL_INCLUDE_SUBDIR}/output")
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
 set(LIBLWA_DEPS ${LIBLWA_DEPS} "${LWAO_DEPS}" PARENT_SCOPE)

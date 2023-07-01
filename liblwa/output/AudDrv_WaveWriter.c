@@ -6,7 +6,7 @@
 
 #include "../common_def.h"	// stdtype.h, INLINE
 
-#include "AudioStream.h"
+#include "lwao.h"
 
 
 #ifdef _MSC_VER

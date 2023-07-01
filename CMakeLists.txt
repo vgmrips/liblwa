@@ -22,7 +22,8 @@ include("${PROJECT_SOURCE_DIR}/cmake/utils.cmake")
 set(LIBLWA_NAME ${PROJECT_NAME})	# for use in subdirectories
 set(LIBLWA_VERSION ${PROJECT_VERSION})	# for use in subdirectories
 set(LIBLWA_SOURCE_DIR ${PROJECT_SOURCE_DIR})	# for use in subdirectories
-set(LIBLWA_INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}/lwa")
+set(LIBLWA_INSTALL_INCLUDE_DIR "${CMAKE_INSTALL_INCLUDEDIR}")
+set(LIBLWA_INSTALL_INCLUDE_SUBDIR "${LIBLWA_INSTALL_INCLUDE_DIR}/liblwa")
 set(LIBLWA_INSTALL_TARGETS)	# will be filled in by sub-projects
 set(LIBLWA_DEPS)	# will be filled in by sub-projects
 
@@ -112,12 +113,12 @@ find_package(Sanitizers)
 
 
 # --- main library ---
-add_subdirectory(utils)
+add_subdirectory(liblwa/utils)
 if(USE_SANITIZERS)
-	add_sanitizers(utils)
+	add_sanitizers(lwa-utils)
 endif(USE_SANITIZERS)
 
-add_subdirectory(audio)
+add_subdirectory(liblwa/output)
 if(USE_SANITIZERS)
 	add_sanitizers(lwa-output)
 endif(USE_SANITIZERS)
@@ -126,8 +127,7 @@ endif(USE_SANITIZERS)
 # --- additional stuff ---
 if(BUILD_EXAMPLES)
 
-add_executable(audiotest audiotest.c)
-target_include_directories(audiotest PRIVATE ${LIBLWA_SOURCE_DIR})
+add_executable(audiotest examples/audiotest.c)
 target_link_libraries(audiotest PRIVATE lwa-output)
 if(USE_SANITIZERS)
 	add_sanitizers(audiotest)
@@ -137,15 +137,15 @@ install(TARGETS audiotest DESTINATION "${CMAKE_INSTALL_BINDIR}")
 endif(BUILD_EXAMPLES)
 
 set(COMMON_HEADERS
-	common_def.h
-	lwa_api.h
-	stdtype.h
+	liblwa/common_def.h
+	liblwa/lwa_api.h
+	liblwa/stdtype.h
 )
 
-install(FILES ${COMMON_HEADERS} DESTINATION "${LIBLWA_INSTALL_INCLUDE_DIR}")
+install(FILES ${COMMON_HEADERS} DESTINATION "${LIBLWA_INSTALL_INCLUDE_SUBDIR}")
 cmake_cfg_install("${LIBLWA_SOURCE_DIR}/cmake/config.cmake.in"
 	NAME "${LIBLWA_NAME}"
 	VERSION "${LIBLWA_VERSION}"
 	TARGETS "${LIBLWA_INSTALL_TARGETS}"
 	DEPS "${LIBLWA_DEPS}"
-	)
+)

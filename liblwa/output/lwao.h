@@ -1,5 +1,5 @@
-#ifndef __AUDIOSTREAM_H__
-#define __AUDIOSTREAM_H__
+#ifndef LWAO_H
+#define LWAO_H
 
 #ifdef __cplusplus
 extern "C"
@@ -34,7 +34,7 @@ extern "C"
 #endif
 */
 
-#include "AudioStructs.h"
+#include "lwao_structs.h"
 #include "lwao_export.h"
 #include "../lwa_api.h"
 
@@ -178,4 +178,4 @@ LWAO_EXPORT UINT32 LWA_API lwaodGetLatency(void* drvStruct);
 }
 #endif
 
-#endif	// __AUDIOSTREAM_H__
+#endif	// LWAO_H

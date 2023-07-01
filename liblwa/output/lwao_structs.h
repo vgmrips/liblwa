@@ -1,5 +1,5 @@
-#ifndef __AUDIOSTRUCTS_H__
-#define __AUDIOSTRUCTS_H__
+#ifndef LWAO_STRUCTS_H
+#define LWAO_STRUCTS_H
 
 #ifdef __cplusplus
 extern "C"
@@ -111,4 +111,4 @@ typedef struct _lwao_driver
 }
 #endif
 
-#endif	// __AUDIOSTRUCTS_H__
+#endif	// LWAO_STRUCTS_H

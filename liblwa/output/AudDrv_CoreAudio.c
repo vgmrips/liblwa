@@ -12,7 +12,7 @@
 
 #include "../stdtype.h"
 
-#include "AudioStream.h"
+#include "lwao.h"
 #include "../utils/lwauMutex.h"
 
 

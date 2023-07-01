@@ -1,5 +1,5 @@
-#ifndef __ASTRM_SPCDRVFUNS_H__
-#define __ASTRM_SPCDRVFUNS_H__
+#ifndef LWAO_DRVFUNCS_H
+#define LWAO_DRVFUNCS_H
 
 #ifdef __cplusplus
 extern "C"
@@ -33,4 +33,4 @@ LWAO_EXPORT const char* lwaodPulse_GetStreamDesc(void* drvObj);
 }
 #endif
 
-#endif	// __ASTRM_SPCDRVFUNS_H__
+#endif	// LWAO_DRVFUNCS_H
