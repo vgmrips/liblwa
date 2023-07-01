@@ -6,7 +6,6 @@ RUN apt-get update && \
     apt-get install -y \
       gcc \
       g++ \
-      zlib1g-dev \
       cmake \
       libasound2-dev \
       libpulse-dev \
@@ -40,31 +39,26 @@ RUN echo "set(CMAKE_SYSTEM_NAME Windows)" > /opt/x86_64-w64-mingw32.cmake && \
     echo 'set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)' >> /opt/x86_64-w64-mingw32.cmake && \
     echo 'set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)' >> /opt/x86_64-w64-mingw32.cmake
 
-COPY . /src/libvgm
+COPY . /src/liblwa
 
 # regular ol linux compile
-RUN mkdir -p /src/libvgm-build && \
-    cd /src/libvgm-build && \
-    cmake /src/libvgm && \
+RUN mkdir -p /src/liblwa-build && \
+    cd /src/liblwa-build && \
+    cmake /src/liblwa && \
     make
 
-# ubuntu 20.04 includes mingw 7.0.0, xaudio2
-# is supported starting with version 8.0.0,
-# disabling xaudio2 until later upgrade of image
-RUN mkdir -p /src/libvgm-build-win32 && \
-    cd /src/libvgm-build-win32 && \
+RUN mkdir -p /src/liblwa-build-win32 && \
+    cd /src/liblwa-build-win32 && \
     cmake \
       -DCMAKE_BUILD_TYPE=Release \
-      -DAUDIODRV_XAUDIO2=OFF \
       -DCMAKE_TOOLCHAIN_FILE=/opt/i686-w64-mingw32.cmake \
-      /src/libvgm && \
+      /src/liblwa && \
     make
 
-RUN mkdir -p /src/libvgm-build-win64 && \
-    cd /src/libvgm-build-win64 && \
+RUN mkdir -p /src/liblwa-build-win64 && \
+    cd /src/liblwa-build-win64 && \
     cmake \
       -DCMAKE_BUILD_TYPE=Release \
-      -DAUDIODRV_XAUDIO2=OFF \
       -DCMAKE_TOOLCHAIN_FILE=/opt/x86_64-w64-mingw32.cmake \
-      /src/libvgm && \
+      /src/liblwa && \
     make

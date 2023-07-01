@@ -17,8 +17,8 @@ jobs:
         config:
           - { os: windows-latest, build_type: Release, compiler: msvc, extra_settings: '-A Win32' }
           - { os: windows-latest, build_type: Debug, compiler: msvc, extra_settings: '-A Win32' }
-          #- { os: windows-latest, build_type: Release, compiler: msvc, extra_settings: '-A x64' }
-          #- { os: windows-latest, build_type: Debug, compiler: msvc, extra_settings: '-A x64' }
+          - { os: windows-latest, build_type: Release, compiler: msvc, extra_settings: '-A x64' }
+          - { os: windows-latest, build_type: Debug, compiler: msvc, extra_settings: '-A x64' }
           - { os: windows-latest, build_type: Release, compiler: mingw, extra_settings: '-G "MSYS Makefiles"' }
           - { os: windows-latest, build_type: Debug, compiler: mingw, extra_settings: '-G "MSYS Makefiles"' }
           - { os: macos-latest, build_type: Release }
@@ -33,7 +33,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - uses: ./.github/workflows/action-build-libvgm
+    - uses: ./.github/workflows/action-build-liblwa
       with:
         checkout_path: ${{ github.workspace }}
         install_path: ${{ github.workspace }}/install

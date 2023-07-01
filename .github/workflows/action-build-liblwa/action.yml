@@ -2,10 +2,10 @@ name: Build Tests
 
 inputs:
   checkout_path:
-    description: "Where libvgm has been checked out to"
+    description: "Where liblwa has been checked out to"
     required: true
   install_path:
-    description: "Where libvgm should be installed to."
+    description: "Where liblwa should be installed to."
     required: true
   build_type:
     description: "What build configuration (debug or release) should be used"
@@ -80,7 +80,7 @@ runs:
       export PATH_FIXER_INSTALL_PATH='${{ steps.path-fixer.outputs.install_path }}'
       export INPUTS_BUILD_TYPE='${{ inputs.build_type }}'
       cd ${PATH_FIXER_CHECKOUT_PATH}
-      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-libvgm/configure.sh
+      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-liblwa/configure.sh
 
   - name: Configuring [Everything Else]
     if: ${{ runner.os != 'Windows' || inputs.with_msvc == 'true' }}
@@ -94,7 +94,7 @@ runs:
       export PATH_FIXER_INSTALL_PATH='${{ steps.path-fixer.outputs.install_path }}'
       export INPUTS_BUILD_TYPE='${{ inputs.build_type }}'
       cd ${PATH_FIXER_CHECKOUT_PATH}
-      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-libvgm/configure.sh
+      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-liblwa/configure.sh
 
   - name: Build [Windows MinGW]
     if: ${{ runner.os == 'Windows' && inputs.with_msvc != 'true' }}
@@ -103,7 +103,7 @@ runs:
       export PATH_FIXER_CHECKOUT_PATH='${{ steps.path-fixer.outputs.checkout_path }}'
       export INPUTS_BUILD_TYPE='${{ inputs.build_type }}'
       cd ${PATH_FIXER_CHECKOUT_PATH}
-      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-libvgm/build.sh
+      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-liblwa/build.sh
 
   - name: Build [Everything Else]
     if: ${{ runner.os != 'Windows' || inputs.with_msvc == 'true' }}
@@ -112,7 +112,7 @@ runs:
       export PATH_FIXER_CHECKOUT_PATH='${{ steps.path-fixer.outputs.checkout_path }}'
       export INPUTS_BUILD_TYPE='${{ inputs.build_type }}'
       cd ${PATH_FIXER_CHECKOUT_PATH}
-      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-libvgm/build.sh
+      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-liblwa/build.sh
 
   - name: Install [Windows MinGW]
     if: ${{ runner.os == 'Windows' && inputs.with_msvc != 'true' }}
@@ -121,7 +121,7 @@ runs:
       export PATH_FIXER_CHECKOUT_PATH='${{ steps.path-fixer.outputs.checkout_path }}'
       export INPUTS_BUILD_TYPE='${{ inputs.build_type }}'
       cd ${PATH_FIXER_CHECKOUT_PATH}
-      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-libvgm/install.sh
+      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-liblwa/install.sh
 
   - name: Install [Everything Else]
     if: ${{ runner.os != 'Windows' || inputs.with_msvc == 'true' }}
@@ -130,7 +130,7 @@ runs:
       export PATH_FIXER_CHECKOUT_PATH='${{ steps.path-fixer.outputs.checkout_path }}'
       export INPUTS_BUILD_TYPE='${{ inputs.build_type }}'
       cd ${PATH_FIXER_CHECKOUT_PATH}
-      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-libvgm/install.sh
+      ${PATH_FIXER_CHECKOUT_PATH}/.github/workflows/action-build-liblwa/install.sh
 
   - name: Check
     if: ${{ runner.os == 'Windows' && inputs.with_msvc != 'true' }}
@@ -151,7 +151,7 @@ runs:
       echo "Checking compiled libraries"
       echo "==========================="
       find ${{ steps.path-fixer.outputs.install_path }} \
-        -name 'libvgm-*' \
+        -name 'liblwa-*' \
         -exec bash -c "file_lib \"{}\"" \;
       
       function print_pc() {
