@@ -16,9 +16,9 @@ int __cdecl _getch(void);	// from conio.h
 #define _getch	getchar
 #endif
 
-#include "liblwa/stdtype.h"
-#include "liblwa/output/lwao.h"
-#include "liblwa/output/lwao_drvfuncs.h"
+#include <liblwa/stdtype.h>
+#include <liblwa/output/lwao.h>
+#include <liblwa/output/lwao_drvfuncs.h>
 
 
 int main(int argc, char* argv[]);

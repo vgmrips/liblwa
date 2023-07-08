@@ -1,16 +1,90 @@
 # Light-Weight Audio library (liblwa)
 
-TODO ...
+liblwa is a light-weight library that provides a C API for easy audio output on multiple platforms.
 
-## Prefixes
+Currently, the following audio APIs are supported:
+
+- Windows:
+    - WinMM (Windows Multimedia API)
+    - DirectSound
+    - XAudio2
+    - WASAPI (Windows Audio Session API)
+- Unix and Linux:
+    - OSS (Open Sound System)
+    - SADA (Solaris Audio Device Architecture)
+    - ALSA (Advanced Linux Sound Architecture)
+    - PulseAudio
+- Mac OS X:
+    - Core Audio
+- other:
+    - WAVE file writer
+    - [libao](https://xiph.org/ao/)
+
+The library provides functions to output sound using either a callback function or an active "push" function.  
+In addition to that, it also features a few simple wrappers around OS functions for threads, mutexes and signals.  
+The audio API wrappers are kept simple (no resampling or mixing), thus it introduces barely any latency.
+
+## Simple example of using the library
+
+```c
+#include <liblwa/output/lwao.h>
+
+#define SAMPLE_SIZE 2 // opts->numChannels * opts->numBitsPerSmpl / 8
+void main(void)
+{
+    const UINT8 lwad_driver_id = 0; // change to select between e.g. WinMM/DirectSound or ALSA/PulseAudio
+    UINT8 ret;
+    void* audDrv;
+    LWAO_OPTS* opts;
+
+    lwaoInit(); // initialize liblwa
+    ret = lwaodInit(lwad_driver_id, &audDrv); // create audio driver instance (but don't connect to a device yet)
+
+    // set output format
+    opts = lwaodGetOptions(audDrv);
+    opts->sampleRate = 44100;
+    opts->numChannels = 1;
+    opts->numBitsPerSmpl = 16;
+
+    lwaodSetCallback(audDrv, FillBuffer, NULL); // set audio callback
+    ret = lwaodStart(audDrv, 0);  // connect to audio device and start stream
+
+    // --- run main application logic here ---
+    // The function "FillBuffer" will be called when new audio data can be sent.
+    while(1) { /* ... */ }
+
+    ret = lwaodStop(audDrv);  // stop the audio stream
+    lwaodDeinit(&audDrv); // destroy audio driver instance (will NULL the pointer)
+    lwaoDeinit(); // deinitialize liblwa
+}
+
+UINT32 FillBuffer(void* drv, void* user, UINT32 bufSize, void* data)
+{
+    UINT32 smplCount = bufSize / SAMPLE_SIZE;
+    INT16* smplPtr16 = (INT16*)data;
+    UINT32 curSmpl;
+    for (curSmpl = 0; curSmpl < smplCount; curSmpl ++)
+    {
+        // output a square wave
+        smplPtr16[curSmpl] = ((curSmpl / (smplCount / 2)) < 1) ? +0x1000 : -0x1000;
+    }
+    return curSmpl * SAMPLE_SIZE;
+}
+```
+
+## Various notes
+
+### Prefixes
 
 - `lwa` - general library prefix
 - `lwao` - audio **o**utput API
   - `lwaod` - audio output driver API
 - `lwau` - **u**tils API
 
+### Migration from libvgm
 
-## Migration from libvgm
+The library was originally a part of [libvgm](https://github.com/ValleyBell/libvgm) and was eventually split off.
+Most of the split is related to naming, so migrating from libvgm to liblwa can be done mostly using search-and-replace.
 
 - prefix replacement via sed, audio output part:
 
