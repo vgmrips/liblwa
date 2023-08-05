@@ -1,6 +1,11 @@
 #ifndef LWAUMUTEX_H
 #define LWAUMUTEX_H
 
+/**
+ * @file
+ * @brief liblwa utilities: mutex functions
+ */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -10,6 +15,9 @@ extern "C"
 #include "lwau_export.h"
 #include "../lwa_api.h"
 
+/**
+ * liblwa utility mutex object
+ */
 typedef struct _lwau_mutex LWAU_MUTEX;
 
 /**

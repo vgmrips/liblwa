@@ -1,0 +1,161 @@
+# liblwa Doxyfile 1.9.7
+
+# Project related configuration options
+DOXYFILE_ENCODING      = UTF-8
+PROJECT_NAME           = "liblwa"
+# project or revision number
+PROJECT_NUMBER         =
+PROJECT_BRIEF          = "Light-Weight Audio library"
+OUTPUT_DIRECTORY       = ./doxyout
+CREATE_SUBDIRS         = NO
+ALLOW_UNICODE_NAMES    = NO
+OUTPUT_LANGUAGE        = English
+TAB_SIZE               = 4
+OPTIMIZE_OUTPUT_FOR_C  = YES
+MARKDOWN_SUPPORT       = YES
+MARKDOWN_ID_STYLE      = DOXYGEN
+AUTOLINK_SUPPORT       = NO	# default: YES
+IDL_PROPERTY_SUPPORT   = NO
+SUBGROUPING            = YES
+INLINE_GROUPED_CLASSES = NO
+INLINE_SIMPLE_STRUCTS  = NO
+TYPEDEF_HIDES_STRUCT   = YES
+
+# Build related configuration options
+EXTRACT_ALL            = NO
+EXTRACT_PRIVATE        = NO
+EXTRACT_PRIV_VIRTUAL   = NO
+EXTRACT_PACKAGE        = NO
+EXTRACT_STATIC         = NO
+EXTRACT_LOCAL_CLASSES  = NO
+EXTRACT_LOCAL_METHODS  = NO
+EXTRACT_ANON_NSPACES   = NO
+RESOLVE_UNNAMED_PARAMS = YES
+INTERNAL_DOCS          = NO
+CASE_SENSE_NAMES       = SYSTEM
+HIDE_SCOPE_NAMES       = NO
+HIDE_COMPOUND_REFERENCE= NO
+SHOW_HEADERFILE        = YES
+SHOW_INCLUDE_FILES     = NO # default: YES
+SHOW_USED_FILES        = YES
+SHOW_FILES             = YES
+SHOW_NAMESPACES        = YES
+
+# Configuration options related to warning and progress messages
+QUIET                  = NO
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_IF_INCOMPLETE_DOC = YES
+WARN_NO_PARAMDOC       = YES
+WARN_IF_UNDOC_ENUM_VAL = YES
+WARN_AS_ERROR          = FAIL_ON_WARNINGS
+WARN_FORMAT            = "$file:$line: $text"
+WARN_LINE_FORMAT       = "at line $line of file $file"
+WARN_LOGFILE           =
+
+# Configuration options related to the input files
+INPUT                  = ./liblwa/ \
+						./liblwa/utils/ \
+						./liblwa/output/ \
+						./README.md
+INPUT_ENCODING         = UTF-8
+INPUT_FILE_ENCODING    =
+## I only want documentation for header files for now.
+FILE_PATTERNS          = *.h
+#FILE_PATTERNS          = *.c \
+#                         *.cpp \
+#                         *.h \
+#                         *.hpp \
+#                         *.md
+RECURSIVE              = NO
+EXCLUDE                =
+EXCLUDE_SYMLINKS       = NO
+EXCLUDE_PATTERNS       =
+EXCLUDE_SYMBOLS        =
+EXAMPLE_PATH           =
+EXAMPLE_PATTERNS       = *
+EXAMPLE_RECURSIVE      = NO
+IMAGE_PATH             =
+USE_MDFILE_AS_MAINPAGE = ./README.md
+
+# Configuration options related to source browsing
+SOURCE_BROWSER         = NO
+INLINE_SOURCES         = NO
+VERBATIM_HEADERS       = YES
+
+# Configuration options related to the alphabetical class index
+ALPHABETICAL_INDEX     = YES
+IGNORE_PREFIX          =
+
+# Configuration options related to the HTML output
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_FILE_EXTENSION    = .html
+HTML_STYLESHEET        =
+HTML_EXTRA_FILES       =
+HTML_COLORSTYLE        = AUTO_LIGHT
+HTML_DYNAMIC_MENUS     = YES
+HTML_DYNAMIC_SECTIONS  = NO
+ENUM_VALUES_PER_LINE   = 4
+EXT_LINKS_IN_WINDOW    = NO
+OBFUSCATE_EMAILS       = YES
+HTML_FORMULA_FORMAT    = png
+FORMULA_FONTSIZE       = 10
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
+
+# Configuration options related to the LaTeX output
+GENERATE_LATEX         = YES
+LATEX_OUTPUT           = latex
+COMPACT_LATEX          = NO
+PAPER_TYPE             = a4
+PDF_HYPERLINKS         = YES
+USE_PDFLATEX           = YES
+LATEX_HIDE_INDICES     = NO
+LATEX_BIB_STYLE        = plain
+
+# Configuration options related to the RTF output
+GENERATE_RTF           = NO
+
+# Configuration options related to the man page output
+GENERATE_MAN           = YES
+MAN_OUTPUT             = man
+MAN_EXTENSION          = .3
+MAN_SUBDIR             =
+MAN_LINKS              = NO
+
+# Configuration options related to the XML output
+GENERATE_XML           = NO
+
+# Configuration options related to the DOCBOOK output
+GENERATE_DOCBOOK       = NO
+
+# Configuration options for the AutoGen Definitions output
+GENERATE_AUTOGEN_DEF   = NO
+
+# Configuration options related to the Perl module output
+GENERATE_PERLMOD       = NO
+
+# Configuration options related to the preprocessor
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+EXPAND_ONLY_PREDEF     = YES
+SEARCH_INCLUDES        = YES
+INCLUDE_PATH           =
+PREDEFINED             = LWA_API= LWAO_EXPORT= LWAU_EXPORT=
+SKIP_FUNCTION_MACROS   = YES
+
+# Configuration options related to external references
+TAGFILES               =
+GENERATE_TAGFILE       =
+
+# Configuration options related to diagram generator tools
+HIDE_UNDOC_RELATIONS   = YES
+HAVE_DOT               = NO
+CLASS_GRAPH            = YES
+COLLABORATION_GRAPH    = YES
+GROUP_GRAPHS           = YES
+UML_LOOK               = NO
+MSCGEN_TOOL            =
+MSCFILE_DIRS           =

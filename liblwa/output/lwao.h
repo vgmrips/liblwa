@@ -1,6 +1,11 @@
 #ifndef LWAO_H
 #define LWAO_H
 
+/**
+ * @file
+ * @brief liblwa audio output functions
+ */
+
 #ifdef __cplusplus
 extern "C"
 {

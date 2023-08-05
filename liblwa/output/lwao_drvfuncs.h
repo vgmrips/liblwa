@@ -1,6 +1,11 @@
 #ifndef LWAO_DRVFUNCS_H
 #define LWAO_DRVFUNCS_H
 
+/**
+ * @file
+ * @brief liblwa audio output, driver-specific functions
+ */
+
 #ifdef __cplusplus
 extern "C"
 {

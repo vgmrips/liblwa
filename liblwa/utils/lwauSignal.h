@@ -1,6 +1,11 @@
 #ifndef LWAUSIGNAL_H
 #define LWAUSIGNAL_H
 
+/**
+ * @file
+ * @brief liblwa utilities: signal functions
+ */
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -10,6 +15,9 @@ extern "C"
 #include "lwau_export.h"
 #include "../lwa_api.h"
 
+/**
+ * liblwa utility signal object
+ */
 typedef struct _lwau_signal LWAU_SIGNAL;
 
 /**
