@@ -9,7 +9,7 @@
 #include <kernel/OS.h>
 #endif
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 #include "lwauThread.h"
 
 //typedef struct _lwau_thread LWAU_THREAD;
@@ -22,7 +22,7 @@ struct _lwau_thread
 
 static void* lwauThread_Main(void* param);
 
-UINT8 LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args)
+uint8_t LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args)
 {
 	LWAU_THREAD* thr;
 	int retVal;
@@ -86,10 +86,10 @@ void LWA_API lwauThread_Cancel(LWAU_THREAD* thr)
 	return;
 }
 
-UINT64 LWA_API lwauThread_GetID(const LWAU_THREAD* thr)
+uint64_t LWA_API lwauThread_GetID(const LWAU_THREAD* thr)
 {
 #ifdef __APPLE__
-	UINT64 idNum;
+	uint64_t idNum;
 	pthread_threadid_np (thr->id, &idNum);
 	return idNum;
 #elif defined (__HAIKU__)

@@ -10,7 +10,7 @@
 #include <unistd.h>		// for usleep()
 #define	Sleep(msec)	usleep(msec * 1000)
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 #include "lwao.h"
 #include "../utils/lwauThread.h"
@@ -21,20 +21,20 @@
 typedef struct _pulse_driver
 {
 	void* audDrvPtr;
-	volatile UINT8 devState;	// 0 - not running, 1 - running, 2 - terminating
+	volatile uint8_t devState;	// 0 - not running, 1 - running, 2 - terminating
 	
 	pa_sample_spec pulseFmt;
-	UINT32 bufSmpls;
-	UINT32 bufSize;
-	UINT32 bufCount;
-	UINT8* bufSpace;
+	uint32_t bufSmpls;
+	uint32_t bufSize;
+	uint32_t bufCount;
+	uint8_t* bufSpace;
 	
 	LWAU_THREAD* hThread;
 	LWAU_SIGNAL* hSignal;
 	LWAU_MUTEX* hMutex;
 	pa_simple* hPulse;
-	volatile UINT8 pauseThread;
-	UINT8 canPause;
+	volatile uint8_t pauseThread;
+	uint8_t canPause;
 	char* streamDesc;
 	
 	void* userParam;
@@ -42,27 +42,27 @@ typedef struct _pulse_driver
 } DRV_PULSE;
 
 
-UINT8 lwaodPulse_IsAvailable(void);
-UINT8 lwaodPulse_Init(void);
-UINT8 lwaodPulse_Deinit(void);
+uint8_t lwaodPulse_IsAvailable(void);
+uint8_t lwaodPulse_Init(void);
+uint8_t lwaodPulse_Deinit(void);
 const LWAO_DEV_LIST* lwaodPulse_GetDeviceList(void);
 LWAO_OPTS* lwaodPulse_GetDefaultOpts(void);
 
-UINT8 lwaodPulse_Create(void** retDrvObj);
-UINT8 lwaodPulse_Destroy(void* drvObj);
-UINT8 lwaodPulse_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 lwaodPulse_Stop(void* drvObj);
-UINT8 lwaodPulse_Pause(void* drvObj);
-UINT8 lwaodPulse_Resume(void* drvObj);
+uint8_t lwaodPulse_Create(void** retDrvObj);
+uint8_t lwaodPulse_Destroy(void* drvObj);
+uint8_t lwaodPulse_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam);
+uint8_t lwaodPulse_Stop(void* drvObj);
+uint8_t lwaodPulse_Pause(void* drvObj);
+uint8_t lwaodPulse_Resume(void* drvObj);
 
-UINT8 lwaodPulse_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 lwaodPulse_GetBufferSize(void* drvObj);
-UINT8 lwaodPulse_IsBusy(void* drvObj);
-UINT8 lwaodPulse_WriteData(void* drvObj, UINT32 dataSize, void* data);
+uint8_t lwaodPulse_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+uint32_t lwaodPulse_GetBufferSize(void* drvObj);
+uint8_t lwaodPulse_IsBusy(void* drvObj);
+uint8_t lwaodPulse_WriteData(void* drvObj, uint32_t dataSize, void* data);
 
-LWAO_EXPORT UINT8 lwaodPulse_SetStreamDesc(void* drvObj, const char* fileName);
+LWAO_EXPORT uint8_t lwaodPulse_SetStreamDesc(void* drvObj, const char* fileName);
 LWAO_EXPORT const char* lwaodPulse_GetStreamDesc(void* drvObj);
-UINT32 lwaodPulse_GetLatency(void* drvObj);
+uint32_t lwaodPulse_GetLatency(void* drvObj);
 static void LWA_API PulseThread(void* Arg);
 
 
@@ -89,15 +89,15 @@ static char* PulseDevNames[1] = {"default"};
 static LWAO_OPTS defOptions;
 static LWAO_DEV_LIST deviceList;
 
-static UINT8 isInit = 0;
-static UINT32 activeDrivers;
+static uint8_t isInit = 0;
+static uint32_t activeDrivers;
 
-UINT8 lwaodPulse_IsAvailable(void)
+uint8_t lwaodPulse_IsAvailable(void)
 {
 	return 1;
 }
 
-UINT8 lwaodPulse_Init(void)
+uint8_t lwaodPulse_Init(void)
 {
 	if (isInit)
 		return LWAO_ERR_WASDONE;
@@ -120,7 +120,7 @@ UINT8 lwaodPulse_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodPulse_Deinit(void)
+uint8_t lwaodPulse_Deinit(void)
 {
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -144,10 +144,10 @@ LWAO_OPTS* lwaodPulse_GetDefaultOpts(void)
 }
 
 
-UINT8 lwaodPulse_Create(void** retDrvObj)
+uint8_t lwaodPulse_Create(void** retDrvObj)
 {
 	DRV_PULSE* drv;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	
 	drv = (DRV_PULSE*)malloc(sizeof(DRV_PULSE));
 	drv->devState = 0;
@@ -173,7 +173,7 @@ UINT8 lwaodPulse_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodPulse_Destroy(void* drvObj)
+uint8_t lwaodPulse_Destroy(void* drvObj)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
@@ -196,7 +196,7 @@ UINT8 lwaodPulse_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodPulse_SetStreamDesc(void* drvObj, const char* streamDesc)
+uint8_t lwaodPulse_SetStreamDesc(void* drvObj, const char* streamDesc)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
@@ -217,11 +217,11 @@ const char* lwaodPulse_GetStreamDesc(void* drvObj)
 	return drv->streamDesc;
 }
 
-UINT8 lwaodPulse_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+uint8_t lwaodPulse_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
-	UINT64 tempInt64;
-	UINT8 retVal8;
+	uint64_t tempInt64;
+	uint8_t retVal8;
 	
 	if (drv->devState != 0)
 		return 0xD0;	// already running
@@ -232,8 +232,8 @@ UINT8 lwaodPulse_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* 
 	drv->pulseFmt.channels = options->numChannels;
 	drv->pulseFmt.rate = options->sampleRate;
 	
-	tempInt64 = (UINT64)options->sampleRate * options->usecPerBuf;
-	drv->bufSmpls = (UINT32)((tempInt64 + 500000) / 1000000);
+	tempInt64 = (uint64_t)options->sampleRate * options->usecPerBuf;
+	drv->bufSmpls = (uint32_t)((tempInt64 + 500000) / 1000000);
 	drv->bufSize = (options->numBitsPerSmpl * drv->pulseFmt.channels / 8) * drv->bufSmpls;
 	drv->bufCount = options->numBuffers ? options->numBuffers : 10;
 	
@@ -262,7 +262,7 @@ UINT8 lwaodPulse_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* 
 		return 0xC8;	// CreateThread failed
 	}
 	
-	drv->bufSpace = (UINT8*)malloc(drv->bufSize);
+	drv->bufSpace = (uint8_t*)malloc(drv->bufSize);
 	
 	drv->devState = 1;
 	drv->pauseThread = 0x00;
@@ -271,7 +271,7 @@ UINT8 lwaodPulse_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* 
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodPulse_Stop(void* drvObj)
+uint8_t lwaodPulse_Stop(void* drvObj)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
@@ -293,7 +293,7 @@ UINT8 lwaodPulse_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodPulse_Pause(void* drvObj)
+uint8_t lwaodPulse_Pause(void* drvObj)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
@@ -301,7 +301,7 @@ UINT8 lwaodPulse_Pause(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodPulse_Resume(void* drvObj)
+uint8_t lwaodPulse_Resume(void* drvObj)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
@@ -309,7 +309,7 @@ UINT8 lwaodPulse_Resume(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodPulse_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+uint8_t lwaodPulse_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
@@ -323,14 +323,14 @@ UINT8 lwaodPulse_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, voi
 	return LWAO_ERR_OK;
 }
 
-UINT32 lwaodPulse_GetBufferSize(void* drvObj)
+uint32_t lwaodPulse_GetBufferSize(void* drvObj)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 lwaodPulse_IsBusy(void* drvObj)
+uint8_t lwaodPulse_IsBusy(void* drvObj)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
@@ -340,7 +340,7 @@ UINT8 lwaodPulse_IsBusy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodPulse_WriteData(void* drvObj, UINT32 dataSize, void* data)
+uint8_t lwaodPulse_WriteData(void* drvObj, uint32_t dataSize, void* data)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	int retVal;
@@ -356,18 +356,18 @@ UINT8 lwaodPulse_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 lwaodPulse_GetLatency(void* drvObj)
+uint32_t lwaodPulse_GetLatency(void* drvObj)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
-	return (UINT32)(pa_simple_get_latency(drv->hPulse, NULL) / 1000);
+	return (uint32_t)(pa_simple_get_latency(drv->hPulse, NULL) / 1000);
 }
 
 static void LWA_API PulseThread(void* Arg)
 {
 	DRV_PULSE* drv = (DRV_PULSE*)Arg;
-	UINT32 didBuffers;	// number of processed buffers
-	UINT32 bufBytes;
+	uint32_t didBuffers;	// number of processed buffers
+	uint32_t bufBytes;
 	int retVal;
 	
 	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done

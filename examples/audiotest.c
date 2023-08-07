@@ -16,7 +16,7 @@ int __cdecl _getch(void);	// from conio.h
 #define _getch	getchar
 #endif
 
-#include <liblwa/stdtype.h>
+#include <liblwa/lwa_types.h>
 #include <liblwa/output/lwao.h>
 #include <liblwa/output/lwao_drvfuncs.h>
 
@@ -25,30 +25,30 @@ int main(int argc, char* argv[]);
 #ifdef LWAO_DRIVER_DSOUND
 static void SetupDirectSound(void* audDrv);
 #endif
-static UINT32 FillBuffer(void* drvStruct, void* userParam, UINT32 bufSize, void* Data);
+static uint32_t FillBuffer(void* drvStruct, void* userParam, uint32_t bufSize, void* Data);
 
 
 #pragma pack(1)
 typedef struct
 {
-	UINT16 lsb16;
-	INT8 msb8;
+	uint16_t lsb16;
+	int8_t msb8;
 } SMPL24BIT;
 #pragma pack()
 
 
-static UINT32 smplSize;
+static uint32_t smplSize;
 static void* audDrv;
 static void* audDrvLog;
 
 int main(int argc, char* argv[])
 {
-	UINT8 retVal;
-	UINT32 drvCount;
-	UINT32 curDrv;
-	UINT32 idWavOut;
-	UINT32 idWavOutDev;
-	UINT32 idWavWrt;
+	uint8_t retVal;
+	uint32_t drvCount;
+	uint32_t curDrv;
+	uint32_t idWavOut;
+	uint32_t idWavOutDev;
+	uint32_t idWavWrt;
 	LWAO_DINFO* drvInfo;
 	LWAO_OPTS* opts;
 	LWAO_OPTS* optsLog;
@@ -60,18 +60,18 @@ int main(int argc, char* argv[])
 		goto Exit_Deinit;
 	
 #if 0
-	idWavOut = (UINT32)-1;
+	idWavOut = (uint32_t)-1;
 	idWavOutDev = 0;
-	idWavWrt = (UINT32)-1;
+	idWavWrt = (uint32_t)-1;
 	for (curDrv = 0; curDrv < drvCount; curDrv ++)
 	{
 		lwaoGetDriverInfo(curDrv, &drvInfo);
-		if (drvInfo->drvType == LWAO_DTYPE_OUT /*&& idWavOut == (UINT32)-1*/)
+		if (drvInfo->drvType == LWAO_DTYPE_OUT /*&& idWavOut == (uint32_t)-1*/)
 			idWavOut = curDrv;
-		else if (drvInfo->drvType == LWAO_DTYPE_DISK && idWavWrt == (UINT32)-1)
+		else if (drvInfo->drvType == LWAO_DTYPE_DISK && idWavWrt == (uint32_t)-1)
 			idWavWrt = curDrv;
 	}
-	if (idWavOut == (UINT32)-1)
+	if (idWavOut == (uint32_t)-1)
 	{
 		printf("Unable to find output driver\n");
 		goto Exit_Deinit;
@@ -93,9 +93,9 @@ int main(int argc, char* argv[])
 		return 0;
 	}
 	
-	idWavOut = (UINT32)-1;
+	idWavOut = (uint32_t)-1;
 	idWavOutDev = 0;
-	idWavWrt = (UINT32)-1;
+	idWavWrt = (uint32_t)-1;
 	if (argc >= 2)
 		idWavOut = strtoul(argv[1], NULL, 0);
 	if (argc >= 3)
@@ -128,7 +128,7 @@ int main(int argc, char* argv[])
 		SetupDirectSound(audDrv);
 #endif
 	
-	if (idWavWrt == (UINT32)-1)
+	if (idWavWrt == (uint32_t)-1)
 	{
 		audDrvLog = NULL;
 	}
@@ -228,20 +228,18 @@ Exit_Deinit:
 	return 0;
 }
 
-static UINT32 FillBuffer(void* drvStruct, void* userParam, UINT32 bufSize, void* data)
+static uint32_t FillBuffer(void* drvStruct, void* userParam, uint32_t bufSize, void* data)
 {
-	UINT32 smplCount;
-	UINT8* SmplPtr8;
-	INT16* SmplPtr16;
-	SMPL24BIT* SmplPtr24;
-	INT32* SmplPtr32;
-	UINT32 curSmpl;
+	uint8_t* SmplPtr8 = (uint8_t*)data;
+	int16_t* SmplPtr16 = (int16_t*)data;
+	SMPL24BIT* SmplPtr24 = (SMPL24BIT*)data;
+	int32_t* SmplPtr32 = (int32_t*)data;
+	uint32_t smplCount = bufSize / smplSize;
+	uint32_t curSmpl;
 	
-	smplCount = bufSize / smplSize;
 	switch(smplSize)
 	{
 	case 2:
-		SmplPtr16 = (INT16*)data;
 		for (curSmpl = 0; curSmpl < smplCount; curSmpl ++)
 		{
 			if ((curSmpl / (smplCount / 16)) < 15)
@@ -251,7 +249,6 @@ static UINT32 FillBuffer(void* drvStruct, void* userParam, UINT32 bufSize, void*
 		}
 		break;
 	case 1:
-		SmplPtr8 = (UINT8*)data;
 		for (curSmpl = 0; curSmpl < smplCount; curSmpl ++)
 		{
 			if ((curSmpl / (smplCount / 16)) < 15)
@@ -261,7 +258,6 @@ static UINT32 FillBuffer(void* drvStruct, void* userParam, UINT32 bufSize, void*
 		}
 		break;
 	case 3:
-		SmplPtr24 = (SMPL24BIT*)data;
 		for (curSmpl = 0; curSmpl < smplCount; curSmpl ++)
 		{
 			SmplPtr24[curSmpl].lsb16 = 0x00;
@@ -272,7 +268,6 @@ static UINT32 FillBuffer(void* drvStruct, void* userParam, UINT32 bufSize, void*
 		}
 		break;
 	case 4:
-		SmplPtr32 = (INT32*)data;
 		for (curSmpl = 0; curSmpl < smplCount; curSmpl ++)
 		{
 			if ((curSmpl / (smplCount / 16)) < 15)

@@ -15,7 +15,7 @@
 #define	Sleep(msec)	usleep(msec * 1000)
 #endif
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 #include "lwao.h"
 #include "../utils/lwauThread.h"
@@ -25,12 +25,12 @@
 
 typedef struct
 {
-	UINT16 wFormatTag;
-	UINT16 nChannels;
-	UINT32 nSamplesPerSec;
-	UINT32 nAvgBytesPerSec;
-	UINT16 nBlockAlign;
-	UINT16 wBitsPerSample;
+	uint16_t wFormatTag;
+	uint16_t nChannels;
+	uint32_t nSamplesPerSec;
+	uint32_t nAvgBytesPerSec;
+	uint16_t nBlockAlign;
+	uint16_t wBitsPerSample;
 } WAVEFORMAT;	// from MSDN Help
 
 #define WAVE_FORMAT_PCM	0x0001
@@ -46,14 +46,14 @@ typedef struct _oss_parameters
 typedef struct _oss_driver
 {
 	void* audDrvPtr;
-	volatile UINT8 devState;	// 0 - not running, 1 - running, 2 - terminating
+	volatile uint8_t devState;	// 0 - not running, 1 - running, 2 - terminating
 	
 	WAVEFORMAT waveFmt;
-	UINT32 bufSmpls;
-	UINT32 bufSize;
-	UINT32 bufSizeBits;
-	UINT32 bufCount;
-	UINT8* bufSpace;
+	uint32_t bufSmpls;
+	uint32_t bufSize;
+	uint32_t bufSizeBits;
+	uint32_t bufCount;
+	uint8_t* bufSpace;
 	
 #ifdef ENABLE_OSS_THREAD
 	LWAU_THREAD* hThread;
@@ -61,7 +61,7 @@ typedef struct _oss_driver
 	LWAU_SIGNAL* hSignal;
 	LWAU_MUTEX* hMutex;
 	int hFileDSP;
-	volatile UINT8 pauseThread;
+	volatile uint8_t pauseThread;
 	
 	void* userParam;
 	LWAOFUNC_FILLBUF FillBuffer;
@@ -69,26 +69,26 @@ typedef struct _oss_driver
 } DRV_OSS;
 
 
-UINT8 lwaodOSS_IsAvailable(void);
-UINT8 lwaodOSS_Init(void);
-UINT8 lwaodOSS_Deinit(void);
+uint8_t lwaodOSS_IsAvailable(void);
+uint8_t lwaodOSS_Init(void);
+uint8_t lwaodOSS_Deinit(void);
 const LWAO_DEV_LIST* lwaodOSS_GetDeviceList(void);
 LWAO_OPTS* lwaodOSS_GetDefaultOpts(void);
 
-UINT8 lwaodOSS_Create(void** retDrvObj);
-UINT8 lwaodOSS_Destroy(void* drvObj);
-static UINT32 GetNearestBitVal(UINT32 value);
-UINT8 lwaodOSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 lwaodOSS_Stop(void* drvObj);
-UINT8 lwaodOSS_Pause(void* drvObj);
-UINT8 lwaodOSS_Resume(void* drvObj);
+uint8_t lwaodOSS_Create(void** retDrvObj);
+uint8_t lwaodOSS_Destroy(void* drvObj);
+static uint32_t GetNearestBitVal(uint32_t value);
+uint8_t lwaodOSS_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam);
+uint8_t lwaodOSS_Stop(void* drvObj);
+uint8_t lwaodOSS_Pause(void* drvObj);
+uint8_t lwaodOSS_Resume(void* drvObj);
 
-UINT8 lwaodOSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 lwaodOSS_GetBufferSize(void* drvObj);
-UINT8 lwaodOSS_IsBusy(void* drvObj);
-UINT8 lwaodOSS_WriteData(void* drvObj, UINT32 dataSize, void* data);
+uint8_t lwaodOSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+uint32_t lwaodOSS_GetBufferSize(void* drvObj);
+uint8_t lwaodOSS_IsBusy(void* drvObj);
+uint8_t lwaodOSS_WriteData(void* drvObj, uint32_t dataSize, void* data);
 
-UINT32 lwaodOSS_GetLatency(void* drvObj);
+uint32_t lwaodOSS_GetLatency(void* drvObj);
 static void LWA_API OssThread(void* Arg);
 
 
@@ -115,10 +115,10 @@ static char* ossDevNames[1] = {"/dev/dsp"};
 static LWAO_OPTS defOptions;
 static LWAO_DEV_LIST deviceList;
 
-static UINT8 isInit = 0;
-static UINT32 activeDrivers;
+static uint8_t isInit = 0;
+static uint32_t activeDrivers;
 
-UINT8 lwaodOSS_IsAvailable(void)
+uint8_t lwaodOSS_IsAvailable(void)
 {
 	int hFile;
 	
@@ -130,7 +130,7 @@ UINT8 lwaodOSS_IsAvailable(void)
 	return 1;
 }
 
-UINT8 lwaodOSS_Init(void)
+uint8_t lwaodOSS_Init(void)
 {
 	if (isInit)
 		return LWAO_ERR_WASDONE;
@@ -153,7 +153,7 @@ UINT8 lwaodOSS_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodOSS_Deinit(void)
+uint8_t lwaodOSS_Deinit(void)
 {
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -177,10 +177,10 @@ LWAO_OPTS* lwaodOSS_GetDefaultOpts(void)
 }
 
 
-UINT8 lwaodOSS_Create(void** retDrvObj)
+uint8_t lwaodOSS_Create(void** retDrvObj)
 {
 	DRV_OSS* drv;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	
 	drv = (DRV_OSS*)malloc(sizeof(DRV_OSS));
 	drv->devState = 0;
@@ -207,7 +207,7 @@ UINT8 lwaodOSS_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodOSS_Destroy(void* drvObj)
+uint8_t lwaodOSS_Destroy(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -231,15 +231,15 @@ UINT8 lwaodOSS_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-static UINT32 GetNearestBitVal(UINT32 value)
+static uint32_t GetNearestBitVal(uint32_t value)
 {
 	// Example:
 	//	16 -> nearest 16 (1<<4)
 	//	23 -> nearest 16 (1<<4)
 	//	24 -> nearest 32 (1<<5)
 	// So I'll check, if the "nearest?" value is >= original value * 1.5
-	UINT8 curBit;
-	UINT32 newVal;
+	uint8_t curBit;
+	uint32_t newVal;
 	
 	value += value / 2;	// value *= 1.5
 	for (curBit = 4, newVal = (1 << curBit); curBit < 32; curBit ++, newVal <<= 1)
@@ -250,13 +250,13 @@ static UINT32 GetNearestBitVal(UINT32 value)
 	return 0;
 }
 
-UINT8 lwaodOSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+uint8_t lwaodOSS_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
-	UINT64 tempInt64;
+	uint64_t tempInt64;
 	int retVal;
 #ifdef ENABLE_OSS_THREAD
-	UINT8 retVal8;
+	uint8_t retVal8;
 #endif
 	
 	if (drv->devState != 0)
@@ -272,8 +272,8 @@ UINT8 lwaodOSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* au
 	drv->waveFmt.nBlockAlign = drv->waveFmt.wBitsPerSample * drv->waveFmt.nChannels / 8;
 	drv->waveFmt.nAvgBytesPerSec = drv->waveFmt.nSamplesPerSec * drv->waveFmt.nBlockAlign;
 	
-	tempInt64 = (UINT64)options->sampleRate * options->usecPerBuf;
-	drv->bufSmpls = (UINT32)((tempInt64 + 500000) / 1000000);
+	tempInt64 = (uint64_t)options->sampleRate * options->usecPerBuf;
+	drv->bufSmpls = (uint32_t)((tempInt64 + 500000) / 1000000);
 	drv->bufSize = drv->waveFmt.nBlockAlign * drv->bufSmpls;
 	//printf("Wanted buffer size: %u\n", drv->bufSize);
 	// We have the estimated buffer size now.
@@ -334,7 +334,7 @@ UINT8 lwaodOSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* au
 	}
 #endif
 	
-	drv->bufSpace = (UINT8*)malloc(drv->bufSize);
+	drv->bufSpace = (uint8_t*)malloc(drv->bufSize);
 	
 	drv->devState = 1;
 	drv->pauseThread = 0x00;
@@ -343,7 +343,7 @@ UINT8 lwaodOSS_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* au
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodOSS_Stop(void* drvObj)
+uint8_t lwaodOSS_Stop(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	int retVal;
@@ -369,7 +369,7 @@ UINT8 lwaodOSS_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodOSS_Pause(void* drvObj)
+uint8_t lwaodOSS_Pause(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -380,7 +380,7 @@ UINT8 lwaodOSS_Pause(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodOSS_Resume(void* drvObj)
+uint8_t lwaodOSS_Resume(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -392,7 +392,7 @@ UINT8 lwaodOSS_Resume(void* drvObj)
 }
 
 
-UINT8 lwaodOSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+uint8_t lwaodOSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -410,14 +410,14 @@ UINT8 lwaodOSS_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void*
 #endif
 }
 
-UINT32 lwaodOSS_GetBufferSize(void* drvObj)
+uint32_t lwaodOSS_GetBufferSize(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 lwaodOSS_IsBusy(void* drvObj)
+uint8_t lwaodOSS_IsBusy(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
@@ -428,7 +428,7 @@ UINT8 lwaodOSS_IsBusy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodOSS_WriteData(void* drvObj, UINT32 dataSize, void* data)
+uint8_t lwaodOSS_WriteData(void* drvObj, uint32_t dataSize, void* data)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	ssize_t wrtBytes;
@@ -443,7 +443,7 @@ UINT8 lwaodOSS_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 lwaodOSS_GetLatency(void* drvObj)
+uint32_t lwaodOSS_GetLatency(void* drvObj)
 {
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	int retVal;
@@ -459,8 +459,8 @@ UINT32 lwaodOSS_GetLatency(void* drvObj)
 static void LWA_API OssThread(void* Arg)
 {
 	DRV_OSS* drv = (DRV_OSS*)Arg;
-	UINT32 didBuffers;	// number of processed buffers
-	UINT32 bufBytes;
+	uint32_t didBuffers;	// number of processed buffers
+	uint32_t bufBytes;
 	ssize_t wrtBytes;
 	
 	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done

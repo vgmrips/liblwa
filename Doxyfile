@@ -69,7 +69,7 @@ FILE_PATTERNS          = *.h
 #                         *.hpp \
 #                         *.md
 RECURSIVE              = NO
-EXCLUDE                =
+EXCLUDE                = ./liblwa/lwa_inline.h
 EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =

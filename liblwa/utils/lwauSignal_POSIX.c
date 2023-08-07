@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <errno.h>
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 #include "lwauSignal.h"
 
 //typedef struct _lwau_signal LWAU_SIGNAL;
@@ -15,10 +15,10 @@ struct _lwau_signal
 {
 	pthread_mutex_t hMutex;
 	pthread_cond_t hCond;	// condition variable
-	UINT8 state;	// signal state
+	uint8_t state;	// signal state
 };
 
-UINT8 LWA_API lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
+uint8_t LWA_API lwauSignal_Init(LWAU_SIGNAL** retSignal, uint8_t initState)
 {
 	LWAU_SIGNAL* sig;
 	int retVal;
@@ -56,7 +56,7 @@ void LWA_API lwauSignal_Deinit(LWAU_SIGNAL* sig)
 	return;
 }
 
-UINT8 LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
+uint8_t LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	
@@ -71,7 +71,7 @@ UINT8 LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
 	return retVal ? 0xFF : 0x00;
 }
 
-UINT8 LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
+uint8_t LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	
@@ -85,7 +85,7 @@ UINT8 LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
 	return 0x00;
 }
 
-UINT8 LWA_API lwauSignal_Wait(LWAU_SIGNAL* sig)
+uint8_t LWA_API lwauSignal_Wait(LWAU_SIGNAL* sig)
 {
 	int retVal;
 	

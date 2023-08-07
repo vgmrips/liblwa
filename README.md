@@ -32,8 +32,8 @@ The audio API wrappers are kept simple (no resampling or mixing), thus it introd
 #define SAMPLE_SIZE 2 // opts->numChannels * opts->numBitsPerSmpl / 8
 void main(void)
 {
-    const UINT8 lwad_driver_id = 0; // change to select between e.g. WinMM/DirectSound or ALSA/PulseAudio
-    UINT8 ret;
+    const uint8_t lwad_driver_id = 0; // change to select between e.g. WinMM/DirectSound or ALSA/PulseAudio
+    uint8_t ret;
     void* audDrv;
     LWAO_OPTS* opts;
 
@@ -58,11 +58,11 @@ void main(void)
     lwaoDeinit(); // deinitialize liblwa
 }
 
-UINT32 FillBuffer(void* drv, void* user, UINT32 bufSize, void* data)
+uint32_t FillBuffer(void* drv, void* user, uint32_t bufSize, void* data)
 {
-    UINT32 smplCount = bufSize / SAMPLE_SIZE;
-    INT16* smplPtr16 = (INT16*)data;
-    UINT32 curSmpl;
+    uint32_t smplCount = bufSize / SAMPLE_SIZE;
+    int16_t* smplPtr16 = (int16_t*)data;
+    uint32_t curSmpl;
     for (curSmpl = 0; curSmpl < smplCount; curSmpl ++)
     {
         // output a square wave
@@ -125,10 +125,11 @@ Most of the split is related to naming, so migrating from libvgm to liblwa can b
 
 	```bash
 	sed -i \
-		-e 's,stdtype.h,liblwa/stdtype.h,g' \
-		-e 's,common_def.h,liblwa/common_def.h,g' \
+		-e 's,stdtype.h,liblwa/lwa_types.h,g' \
 		<files>
 	```
+
+  **Note:** `common_def.h` was removed.
 
 - moved header files, utilities part:
 

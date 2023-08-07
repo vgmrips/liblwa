@@ -7,7 +7,7 @@
 #include <windows.h>
 #include <mmsystem.h>
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 #include "lwao.h"
 #include "../utils/lwauThread.h"
@@ -23,13 +23,13 @@
 #pragma pack(1)
 typedef struct
 {
-	UINT16 wFormatTag;
-	UINT16 nChannels;
-	UINT32 nSamplesPerSec;
-	UINT32 nAvgBytesPerSec;
-	UINT16 nBlockAlign;
-	UINT16 wBitsPerSample;
-	UINT16 cbSize;
+	uint16_t wFormatTag;
+	uint16_t nChannels;
+	uint32_t nSamplesPerSec;
+	uint32_t nAvgBytesPerSec;
+	uint16_t nBlockAlign;
+	uint16_t wBitsPerSample;
+	uint16_t cbSize;
 } WAVEFORMATEX;	// from MSDN Help
 #pragma pack()
 
@@ -40,14 +40,14 @@ typedef struct
 typedef struct _winmm_driver
 {
 	void* audDrvPtr;
-	volatile UINT8 devState;	// 0 - not running, 1 - running, 2 - terminating
-	UINT16 dummy;	// [for alignment purposes]
+	volatile uint8_t devState;	// 0 - not running, 1 - running, 2 - terminating
+	uint16_t dummy;	// [for alignment purposes]
 	
 	WAVEFORMATEX waveFmt;
-	UINT32 bufSmpls;
-	UINT32 bufSize;
-	UINT32 bufCount;
-	UINT8* bufSpace;
+	uint32_t bufSmpls;
+	uint32_t bufSize;
+	uint32_t bufCount;
+	uint8_t* bufSpace;
 	
 	LWAU_THREAD* hThread;
 	LWAU_SIGNAL* hSignal;
@@ -57,30 +57,30 @@ typedef struct _winmm_driver
 	void* userParam;
 	LWAOFUNC_FILLBUF FillBuffer;
 	
-	UINT32 BlocksSent;
-	UINT32 BlocksPlayed;
+	uint32_t BlocksSent;
+	uint32_t BlocksPlayed;
 } DRV_WINMM;
 
 
-UINT8 lwaodWinMM_IsAvailable(void);
-UINT8 lwaodWinMM_Init(void);
-UINT8 lwaodWinMM_Deinit(void);
+uint8_t lwaodWinMM_IsAvailable(void);
+uint8_t lwaodWinMM_Init(void);
+uint8_t lwaodWinMM_Deinit(void);
 const LWAO_DEV_LIST* lwaodWinMM_GetDeviceList(void);
 LWAO_OPTS* lwaodWinMM_GetDefaultOpts(void);
 
-UINT8 lwaodWinMM_Create(void** retDrvObj);
-UINT8 lwaodWinMM_Destroy(void* drvObj);
-UINT8 lwaodWinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 lwaodWinMM_Stop(void* drvObj);
-UINT8 lwaodWinMM_Pause(void* drvObj);
-UINT8 lwaodWinMM_Resume(void* drvObj);
+uint8_t lwaodWinMM_Create(void** retDrvObj);
+uint8_t lwaodWinMM_Destroy(void* drvObj);
+uint8_t lwaodWinMM_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam);
+uint8_t lwaodWinMM_Stop(void* drvObj);
+uint8_t lwaodWinMM_Pause(void* drvObj);
+uint8_t lwaodWinMM_Resume(void* drvObj);
 
-UINT8 lwaodWinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 lwaodWinMM_GetBufferSize(void* drvObj);
-UINT8 lwaodWinMM_IsBusy(void* drvObj);
-UINT8 lwaodWinMM_WriteData(void* drvObj, UINT32 dataSize, void* data);
+uint8_t lwaodWinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+uint32_t lwaodWinMM_GetBufferSize(void* drvObj);
+uint8_t lwaodWinMM_IsBusy(void* drvObj);
+uint8_t lwaodWinMM_WriteData(void* drvObj, uint32_t dataSize, void* data);
 
-UINT32 lwaodWinMM_GetLatency(void* drvObj);
+uint32_t lwaodWinMM_GetLatency(void* drvObj);
 static void LWA_API WaveOutThread(void* Arg);
 static void WriteBuffer(DRV_WINMM* drv, WAVEHDR* wHdr);
 static void BufCheck(DRV_WINMM* drv);
@@ -109,23 +109,23 @@ static LWAO_OPTS defOptions;
 static LWAO_DEV_LIST deviceList;
 static UINT* devListIDs;
 
-static UINT8 isInit = 0;
-static UINT32 activeDrivers;
+static uint8_t isInit = 0;
+static uint32_t activeDrivers;
 
-UINT8 lwaodWinMM_IsAvailable(void)
+uint8_t lwaodWinMM_IsAvailable(void)
 {
-	UINT32 numDevs;
+	UINT numDevs;
 	
 	numDevs = waveOutGetNumDevs();
 	return numDevs ? 1 : 0;
 }
 
-UINT8 lwaodWinMM_Init(void)
+uint8_t lwaodWinMM_Init(void)
 {
 	UINT numDevs;
 	WAVEOUTCAPSA woCaps;
-	UINT32 curDev;
-	UINT32 devLstID;
+	uint32_t curDev;
+	uint32_t devLstID;
 	MMRESULT retValMM;
 	
 	if (isInit)
@@ -171,9 +171,9 @@ UINT8 lwaodWinMM_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodWinMM_Deinit(void)
+uint8_t lwaodWinMM_Deinit(void)
 {
-	UINT32 curDev;
+	uint32_t curDev;
 	
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -200,10 +200,10 @@ LWAO_OPTS* lwaodWinMM_GetDefaultOpts(void)
 }
 
 
-UINT8 lwaodWinMM_Create(void** retDrvObj)
+uint8_t lwaodWinMM_Create(void** retDrvObj)
 {
 	DRV_WINMM* drv;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	
 	drv = (DRV_WINMM*)malloc(sizeof(DRV_WINMM));
 	drv->devState = 0;
@@ -228,7 +228,7 @@ UINT8 lwaodWinMM_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodWinMM_Destroy(void* drvObj)
+uint8_t lwaodWinMM_Destroy(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	
@@ -250,15 +250,15 @@ UINT8 lwaodWinMM_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodWinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+uint8_t lwaodWinMM_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
-	UINT64 tempInt64;
-	UINT32 woDevID;
-	UINT32 curBuf;
+	uint64_t tempInt64;
+	UINT woDevID;
+	uint32_t curBuf;
 	WAVEHDR* tempWavHdr;
 	MMRESULT retValMM;
-	UINT8 retVal8;
+	uint8_t retVal8;
 #ifdef NDEBUG
 	HANDLE hWinThr;
 	BOOL retValB;
@@ -280,8 +280,8 @@ UINT8 lwaodWinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* 
 	drv->waveFmt.nAvgBytesPerSec = drv->waveFmt.nSamplesPerSec * drv->waveFmt.nBlockAlign;
 	drv->waveFmt.cbSize = 0;
 	
-	tempInt64 = (UINT64)options->sampleRate * options->usecPerBuf;
-	drv->bufSmpls = (UINT32)((tempInt64 + 500000) / 1000000);
+	tempInt64 = (uint64_t)options->sampleRate * options->usecPerBuf;
+	drv->bufSmpls = (uint32_t)((tempInt64 + 500000) / 1000000);
 	drv->bufSize = drv->waveFmt.nBlockAlign * drv->bufSmpls;
 	drv->bufCount = options->numBuffers ? options->numBuffers : 10;
 	
@@ -310,7 +310,7 @@ UINT8 lwaodWinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* 
 #endif
 	
 	drv->waveHdrs = (WAVEHDR*)malloc(drv->bufCount * sizeof(WAVEHDR));
-	drv->bufSpace = (UINT8*)malloc(drv->bufCount * drv->bufSize);
+	drv->bufSpace = (uint8_t*)malloc(drv->bufCount * drv->bufSize);
 	for (curBuf = 0; curBuf < drv->bufCount; curBuf ++)
 	{
 		tempWavHdr = &drv->waveHdrs[curBuf];
@@ -334,10 +334,10 @@ UINT8 lwaodWinMM_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* 
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodWinMM_Stop(void* drvObj)
+uint8_t lwaodWinMM_Stop(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
-	UINT32 curBuf;
+	uint32_t curBuf;
 	MMRESULT retValMM;
 	
 	if (drv->devState != 1)
@@ -363,7 +363,7 @@ UINT8 lwaodWinMM_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodWinMM_Pause(void* drvObj)
+uint8_t lwaodWinMM_Pause(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	MMRESULT retValMM;
@@ -375,7 +375,7 @@ UINT8 lwaodWinMM_Pause(void* drvObj)
 	return (retValMM == MMSYSERR_NOERROR) ? LWAO_ERR_OK : 0xFF;
 }
 
-UINT8 lwaodWinMM_Resume(void* drvObj)
+uint8_t lwaodWinMM_Resume(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	MMRESULT retValMM;
@@ -388,7 +388,7 @@ UINT8 lwaodWinMM_Resume(void* drvObj)
 }
 
 
-UINT8 lwaodWinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+uint8_t lwaodWinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	
@@ -400,17 +400,17 @@ UINT8 lwaodWinMM_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, voi
 	return LWAO_ERR_OK;
 }
 
-UINT32 lwaodWinMM_GetBufferSize(void* drvObj)
+uint32_t lwaodWinMM_GetBufferSize(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 lwaodWinMM_IsBusy(void* drvObj)
+uint8_t lwaodWinMM_IsBusy(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
-	UINT32 curBuf;
+	uint32_t curBuf;
 	
 	if (drv->FillBuffer != NULL)
 		return LWAO_ERR_BAD_MODE;
@@ -423,10 +423,10 @@ UINT8 lwaodWinMM_IsBusy(void* drvObj)
 	return LWAO_ERR_BUSY;
 }
 
-UINT8 lwaodWinMM_WriteData(void* drvObj, UINT32 dataSize, void* data)
+uint8_t lwaodWinMM_WriteData(void* drvObj, uint32_t dataSize, void* data)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
-	UINT32 curBuf;
+	uint32_t curBuf;
 	WAVEHDR* tempWavHdr;
 	
 	if (dataSize > drv->bufSize)
@@ -454,11 +454,11 @@ UINT8 lwaodWinMM_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 lwaodWinMM_GetLatency(void* drvObj)
+uint32_t lwaodWinMM_GetLatency(void* drvObj)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)drvObj;
-	UINT32 bufBehind;
-	UINT32 smplsBehind;
+	uint32_t bufBehind;
+	uint32_t smplsBehind;
 	
 	BufCheck(drv);
 	bufBehind = drv->BlocksSent - drv->BlocksPlayed;
@@ -469,8 +469,8 @@ UINT32 lwaodWinMM_GetLatency(void* drvObj)
 static void LWA_API WaveOutThread(void* Arg)
 {
 	DRV_WINMM* drv = (DRV_WINMM*)Arg;
-	UINT32 curBuf;
-	UINT32 didBuffers;	// number of processed buffers
+	uint32_t curBuf;
+	uint32_t didBuffers;	// number of processed buffers
 	WAVEHDR* tempWavHdr;
 	
 	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done
@@ -523,7 +523,7 @@ static void WriteBuffer(DRV_WINMM* drv, WAVEHDR* wHdr)
 
 static void BufCheck(DRV_WINMM* drv)
 {
-	UINT32 curBuf;
+	uint32_t curBuf;
 	
 	for (curBuf = 0; curBuf < drv->bufCount; curBuf ++)
 	{

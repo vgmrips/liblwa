@@ -11,7 +11,7 @@ extern "C"
 {
 #endif
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 #include "lwau_export.h"
 #include "../lwa_api.h"
 
@@ -28,7 +28,7 @@ typedef void (LWA_API *LWAU_THR_FUNC)(void* args);
  * @param args parameter pointer passes to the thread function
  * @return error code. 0 = success, other values = error
  */
-LWAU_EXPORT UINT8 LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args);
+LWAU_EXPORT uint8_t LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args);
 /**
  * @brief Destroys a thread object.
  *
@@ -53,7 +53,7 @@ LWAU_EXPORT void LWA_API lwauThread_Cancel(LWAU_THREAD* thr);
  * @param thr thread object pointer
  * @return thread ID
  */
-LWAU_EXPORT UINT64 LWA_API lwauThread_GetID(const LWAU_THREAD* thr);
+LWAU_EXPORT uint64_t LWA_API lwauThread_GetID(const LWAU_THREAD* thr);
 /**
  * @brief Get pointer to OS-specific thread handle.
  *

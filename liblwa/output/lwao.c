@@ -4,7 +4,7 @@
 #include <stdlib.h>
 //#include <string.h>	// for memset
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 #include "lwao.h"
 #include "../utils/lwauMutex.h"
@@ -88,14 +88,14 @@ LWAO_DRIVER* audDrivers[] =
 
 typedef struct _audio_driver_load
 {
-	UINT8 flags;
+	uint8_t flags;
 	LWAO_DRIVER* drvStruct;
 } LWAO_D_LOAD;
 
 typedef struct _audio_driver_instance LWAO_D_INSTANCE;
 struct _audio_driver_instance
 {
-	UINT32 ID;	// -1 = unused
+	uint32_t ID;	// -1 = unused
 	LWAO_DRIVER* drvStruct;
 	LWAO_OPTS drvOpts;
 	void* drvData;
@@ -105,42 +105,42 @@ struct _audio_driver_instance
 #define ADFLG_IS_INIT	0x02
 #define ADFLG_AVAILABLE	0x80
 
-#define ADID_UNUSED		(UINT32)-1
+#define ADID_UNUSED		(uint32_t)-1
 
 
-//UINT8 lwaoInit(void);
-//UINT8 lwaoDeinit(void);
-//UINT32 lwaoGetDriverCount(void);
-//UINT8 lwaoGetDriverInfo(UINT32 drvID, LWAO_DINFO** retDrvInfo);
+//uint8_t lwaoInit(void);
+//uint8_t lwaoDeinit(void);
+//uint32_t lwaoGetDriverCount(void);
+//uint8_t lwaoGetDriverInfo(uint32_t drvID, LWAO_DINFO** retDrvInfo);
 static LWAO_D_INSTANCE* GetFreeRunSlot(void);
-//UINT8 lwaodInit(UINT32 drvID, void** retDrvStruct);
-//UINT8 lwaodDeinit(void** drvStruct);
+//uint8_t lwaodInit(uint32_t drvID, void** retDrvStruct);
+//uint8_t lwaodDeinit(void** drvStruct);
 //const LWAO_DEV_LIST* lwaodGetDeviceList(void* drvStruct);
 //LWAO_OPTS* lwaodGetOptions(void* drvStruct);
-//UINT8 lwaodStart(void* drvStruct, UINT32 devID);
-//UINT8 lwaodStop(void* drvStruct);
-//UINT8 lwaodPause(void* drvStruct);
-//UINT8 lwaodResume(void* drvStruct);
-//UINT8 lwaodSetCallback(void* drvStruct, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-//UINT32 lwaodGetBufferSize(void* drvStruct);
-//UINT8 lwaodIsBusy(void* drvStruct);
-//UINT8 lwaodWriteData(void* drvStruct, UINT32 dataSize, void* data);
-//UINT32 lwaodGetLatency(void* drvStruct);
+//uint8_t lwaodStart(void* drvStruct, uint32_t devID);
+//uint8_t lwaodStop(void* drvStruct);
+//uint8_t lwaodPause(void* drvStruct);
+//uint8_t lwaodResume(void* drvStruct);
+//uint8_t lwaodSetCallback(void* drvStruct, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+//uint32_t lwaodGetBufferSize(void* drvStruct);
+//uint8_t lwaodIsBusy(void* drvStruct);
+//uint8_t lwaodWriteData(void* drvStruct, uint32_t dataSize, void* data);
+//uint32_t lwaodGetLatency(void* drvStruct);
 
 
-static UINT32 audDrvCount = 0;
+static uint32_t audDrvCount = 0;
 static LWAO_D_LOAD* audDrvLoaded = NULL;
 
-static UINT32 runDevCount = 0;
+static uint32_t runDevCount = 0;
 static LWAO_D_INSTANCE* runDevices = NULL;
 
-static UINT8 isInit = 0;
+static uint8_t isInit = 0;
 
 
-UINT8 LWA_API lwaoInit(void)
+uint8_t LWA_API lwaoInit(void)
 {
-	UINT32 curDrv;
-	UINT32 curDrvLd;
+	uint32_t curDrv;
+	uint32_t curDrvLd;
 	LWAO_DRIVER* tempDrv;
 	LWAO_D_LOAD* tempDLoad;
 	
@@ -183,9 +183,9 @@ UINT8 LWA_API lwaoInit(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LWA_API lwaoDeinit(void)
+uint8_t LWA_API lwaoDeinit(void)
 {
-	UINT32 curDev;
+	uint32_t curDev;
 	LWAO_D_INSTANCE* tempAIns;
 	
 	if (! isInit)
@@ -215,12 +215,12 @@ UINT8 LWA_API lwaoDeinit(void)
 	return LWAO_ERR_OK;
 }
 
-UINT32 LWA_API lwaoGetDriverCount(void)
+uint32_t LWA_API lwaoGetDriverCount(void)
 {
 	return audDrvCount;
 }
 
-UINT8 LWA_API lwaoGetDriverInfo(UINT32 drvID, LWAO_DINFO** retDrvInfo)
+uint8_t LWA_API lwaoGetDriverInfo(uint32_t drvID, LWAO_DINFO** retDrvInfo)
 {
 	if (drvID >= audDrvCount)
 		return LWAO_ERR_INVALID_DRV;
@@ -232,7 +232,7 @@ UINT8 LWA_API lwaoGetDriverInfo(UINT32 drvID, LWAO_DINFO** retDrvInfo)
 
 static LWAO_D_INSTANCE* GetFreeRunSlot(void)
 {
-	UINT32 curDev;
+	uint32_t curDev;
 	
 	for (curDev = 0; curDev < runDevCount; curDev ++)
 	{
@@ -252,13 +252,13 @@ static LWAO_D_INSTANCE* GetFreeRunSlot(void)
 	return &runDevices[curDev];*/
 }
 
-UINT8 LWA_API lwaodInit(UINT32 drvID, void** retDrvStruct)
+uint8_t LWA_API lwaodInit(uint32_t drvID, void** retDrvStruct)
 {
 	LWAO_D_LOAD* tempDLoad;
 	LWAO_DRIVER* tempDrv;
 	LWAO_D_INSTANCE* audInst;
 	void* drvData;
-	UINT8 retVal;
+	uint8_t retVal;
 	
 	if (drvID >= audDrvCount)
 		return LWAO_ERR_INVALID_DRV;
@@ -287,11 +287,11 @@ UINT8 LWA_API lwaodInit(UINT32 drvID, void** retDrvStruct)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LWA_API lwaodDeinit(void** drvStruct)
+uint8_t LWA_API lwaodDeinit(void** drvStruct)
 {
 	LWAO_D_INSTANCE* audInst;
 	LWAO_DRIVER* aDrv;
-	UINT8 retVal;
+	uint8_t retVal;
 	
 	if (drvStruct == NULL)
 		return LWAO_ERR_OK;
@@ -339,11 +339,11 @@ void* LWA_API lwaodGetDrvData(void* drvStruct)
 	return audInst->drvData;
 }
 
-UINT8 LWA_API lwaodStart(void* drvStruct, UINT32 devID)
+uint8_t LWA_API lwaodStart(void* drvStruct, uint32_t devID)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;
-	UINT8 retVal;
+	uint8_t retVal;
 	
 	retVal = aDrv->Start(audInst->drvData, devID, &audInst->drvOpts, audInst);
 	if (retVal)
@@ -352,11 +352,11 @@ UINT8 LWA_API lwaodStart(void* drvStruct, UINT32 devID)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LWA_API lwaodStop(void* drvStruct)
+uint8_t LWA_API lwaodStop(void* drvStruct)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;
-	UINT8 retVal;
+	uint8_t retVal;
 	
 	retVal = aDrv->Stop(audInst->drvData);
 	if (retVal)
@@ -365,7 +365,7 @@ UINT8 LWA_API lwaodStop(void* drvStruct)
 	return LWAO_ERR_OK;
 }
 
-UINT8 LWA_API lwaodPause(void* drvStruct)
+uint8_t LWA_API lwaodPause(void* drvStruct)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;
@@ -373,7 +373,7 @@ UINT8 LWA_API lwaodPause(void* drvStruct)
 	return aDrv->Pause(audInst->drvData);
 }
 
-UINT8 LWA_API lwaodResume(void* drvStruct)
+uint8_t LWA_API lwaodResume(void* drvStruct)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;
@@ -381,7 +381,7 @@ UINT8 LWA_API lwaodResume(void* drvStruct)
 	return aDrv->Resume(audInst->drvData);
 }
 
-UINT8 LWA_API lwaodSetCallback(void* drvStruct, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+uint8_t LWA_API lwaodSetCallback(void* drvStruct, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;
@@ -389,7 +389,7 @@ UINT8 LWA_API lwaodSetCallback(void* drvStruct, LWAOFUNC_FILLBUF FillBufCallback
 	return aDrv->SetCallback(audInst->drvData, FillBufCallback, userParam);
 }
 
-UINT32 LWA_API lwaodGetBufferSize(void* drvStruct)
+uint32_t LWA_API lwaodGetBufferSize(void* drvStruct)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;
@@ -397,7 +397,7 @@ UINT32 LWA_API lwaodGetBufferSize(void* drvStruct)
 	return aDrv->GetBufferSize(audInst->drvData);
 }
 
-UINT8 LWA_API lwaodIsBusy(void* drvStruct)
+uint8_t LWA_API lwaodIsBusy(void* drvStruct)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;
@@ -405,7 +405,7 @@ UINT8 LWA_API lwaodIsBusy(void* drvStruct)
 	return aDrv->IsBusy(audInst->drvData);
 }
 
-UINT8 LWA_API lwaodWriteData(void* drvStruct, UINT32 dataSize, void* data)
+uint8_t LWA_API lwaodWriteData(void* drvStruct, uint32_t dataSize, void* data)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;
@@ -413,7 +413,7 @@ UINT8 LWA_API lwaodWriteData(void* drvStruct, UINT32 dataSize, void* data)
 	return aDrv->WriteData(audInst->drvData, dataSize, data);
 }
 
-UINT32 LWA_API lwaodGetLatency(void* drvStruct)
+uint32_t LWA_API lwaodGetLatency(void* drvStruct)
 {
 	LWAO_D_INSTANCE* audInst = (LWAO_D_INSTANCE*)drvStruct;
 	LWAO_DRIVER* aDrv = audInst->drvStruct;

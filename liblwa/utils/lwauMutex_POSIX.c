@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <errno.h>
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 #include "lwauMutex.h"
 
 //typedef struct _lwau_mutex LWAU_MUTEX;
@@ -16,7 +16,7 @@ struct _lwau_mutex
 	pthread_mutex_t hMutex;
 };
 
-UINT8 LWA_API lwauMutex_Init(LWAU_MUTEX** retMutex, UINT8 initLocked)
+uint8_t LWA_API lwauMutex_Init(LWAU_MUTEX** retMutex, uint8_t initLocked)
 {
 	LWAU_MUTEX* mtx;
 	int retVal;
@@ -46,7 +46,7 @@ void LWA_API lwauMutex_Deinit(LWAU_MUTEX* mtx)
 	return;
 }
 
-UINT8 LWA_API lwauMutex_Lock(LWAU_MUTEX* mtx)
+uint8_t LWA_API lwauMutex_Lock(LWAU_MUTEX* mtx)
 {
 	int retVal;
 	
@@ -57,7 +57,7 @@ UINT8 LWA_API lwauMutex_Lock(LWAU_MUTEX* mtx)
 		return 0xFF;
 }
 
-UINT8 LWA_API lwauMutex_TryLock(LWAU_MUTEX* mtx)
+uint8_t LWA_API lwauMutex_TryLock(LWAU_MUTEX* mtx)
 {
 	int retVal;
 	
@@ -70,7 +70,7 @@ UINT8 LWA_API lwauMutex_TryLock(LWAU_MUTEX* mtx)
 		return 0xFF;
 }
 
-UINT8 LWA_API lwauMutex_Unlock(LWAU_MUTEX* mtx)
+uint8_t LWA_API lwauMutex_Unlock(LWAU_MUTEX* mtx)
 {
 	int retVal;
 	

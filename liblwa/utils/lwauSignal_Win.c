@@ -6,7 +6,7 @@
 
 #include <windows.h>
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 #include "lwauSignal.h"
 
 //typedef struct _lwau_signal LWAU_SIGNAL;
@@ -15,7 +15,7 @@ struct _lwau_signal
 	HANDLE hEvent;
 };
 
-UINT8 LWA_API lwauSignal_Init(LWAU_SIGNAL** retSignal, UINT8 initState)
+uint8_t LWA_API lwauSignal_Init(LWAU_SIGNAL** retSignal, uint8_t initState)
 {
 	LWAU_SIGNAL* sig;
 	
@@ -42,7 +42,7 @@ void LWA_API lwauSignal_Deinit(LWAU_SIGNAL* sig)
 	return;
 }
 
-UINT8 LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
+uint8_t LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
 {
 	BOOL retVal;
 	
@@ -50,7 +50,7 @@ UINT8 LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
 	return retVal ? 0x00 : 0xFF;
 }
 
-UINT8 LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
+uint8_t LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
 {
 	BOOL retVal;
 	
@@ -58,7 +58,7 @@ UINT8 LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
 	return retVal ? 0x00 : 0xFF;
 }
 
-UINT8 LWA_API lwauSignal_Wait(LWAU_SIGNAL* sig)
+uint8_t LWA_API lwauSignal_Wait(LWAU_SIGNAL* sig)
 {
 	DWORD retVal;
 	

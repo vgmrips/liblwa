@@ -11,7 +11,7 @@ extern "C"
 {
 #endif
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 /**
  * @brief audio driver options
@@ -20,12 +20,12 @@ extern "C"
  */
 typedef struct _lwao_options
 {
-	UINT32 sampleRate;		/**< requested sample rate */
-	UINT8 numChannels;		/**< number of channels, 1 = mono, 2 = stereo */
-	UINT8 numBitsPerSmpl;	/**< bits per sample */
+	uint32_t sampleRate;		/**< requested sample rate */
+	uint8_t numChannels;		/**< number of channels, 1 = mono, 2 = stereo */
+	uint8_t numBitsPerSmpl;	/**< bits per sample */
 	
-	UINT32 usecPerBuf;		/**< audio buffer size in microseconds */
-	UINT32 numBuffers;		/**< number of audio buffers, total buffer size = (buffer size * count) */
+	uint32_t usecPerBuf;		/**< audio buffer size in microseconds */
+	uint32_t numBuffers;		/**< number of audio buffers, total buffer size = (buffer size * count) */
 } LWAO_OPTS;
 
 /**
@@ -33,32 +33,32 @@ typedef struct _lwao_options
  */
 typedef struct _lwao_device_list
 {
-	UINT32 devCount;	/**< number of devices in the list */
+	uint32_t devCount;	/**< number of devices in the list */
 	char** devNames;	/**< list of strings of the device names */
 } LWAO_DEV_LIST;
 
 
 /** @brief function that fills a buffer with audio data and returns the number of written bytes */
-typedef UINT32 (*LWAOFUNC_FILLBUF)(void* drvStruct, void* userParam, UINT32 bufSize, void* data);
+typedef uint32_t (*LWAOFUNC_FILLBUF)(void* drvStruct, void* userParam, uint32_t bufSize, void* data);
 
 /** @brief generic function that returns an error code (for init/deinit) */
-typedef UINT8 (*LWAOFUNC_COMMON)(void);
+typedef uint8_t (*LWAOFUNC_COMMON)(void);
 /** @brief function that returns a list of available devices */
 typedef const LWAO_DEV_LIST* (*LWAOFUNC_DEVLIST)(void);
 /** @brief function that returns a pointer to the default driver options  */
 typedef LWAO_OPTS* (*LWAOFUNC_DEFOPTS)(void);
 /** @brief generic driver function that returns an error code (for stop/pause/resume) */
-typedef UINT8 (*LWAOFUNC_DRVCOMMON)(void* drvObj);
+typedef uint8_t (*LWAOFUNC_DRVCOMMON)(void* drvObj);
 /** @brief driver instance create function */
-typedef UINT8 (*LWAOFUNC_DRVCREATE)(void** retDrvObj);
+typedef uint8_t (*LWAOFUNC_DRVCREATE)(void** retDrvObj);
 /** @brief driver "strt device" function */
-typedef UINT8 (*LWAOFUNC_DRVSTART)(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
+typedef uint8_t (*LWAOFUNC_DRVSTART)(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam);
 /** @brief generic driver function that returns a 32-bit integer  */
-typedef UINT32 (*LWAOFUNC_DRVRET32)(void* drvObj);
+typedef uint32_t (*LWAOFUNC_DRVRET32)(void* drvObj);
 /** @brief driver function for setting a "fill buffer" callback function */
-typedef UINT8 (*LWAOFUNC_DRVSETCB)(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+typedef uint8_t (*LWAOFUNC_DRVSETCB)(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
 /** @brief driver function for writing audio data */
-typedef UINT8 (*LWAOFUNC_DRVWRTDATA)(void* drvObj, UINT32 dataSize, void* data);
+typedef uint8_t (*LWAOFUNC_DRVWRTDATA)(void* drvObj, uint32_t dataSize, void* data);
 
 
 /**
@@ -68,8 +68,8 @@ typedef UINT8 (*LWAOFUNC_DRVWRTDATA)(void* drvObj, UINT32 dataSize, void* data);
  */
 typedef struct _lwao_driver_info
 {
-	UINT8 drvType;			/**< driver type code, see LWAO_DTYPE_* constants */
-	UINT8 drvSig;			/**< driver signature code, see LWAO_DSIG_* constants */
+	uint8_t drvType;			/**< driver type code, see LWAO_DTYPE_* constants */
+	uint8_t drvSig;			/**< driver signature code, see LWAO_DSIG_* constants */
 	const char* drvName;	/**< driver name */
 } LWAO_DINFO;
 /**

@@ -10,7 +10,7 @@
 #include <unistd.h>		// for usleep()
 #define	Sleep(msec)	usleep(msec * 1000)
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 #include "lwao.h"
 #include "../utils/lwauMutex.h"
@@ -19,13 +19,13 @@
 typedef struct _coreaudio_driver
 {
 	void* audDrvPtr;
-	volatile UINT8 devState;	// 0 - not running, 1 - running, 2 - terminating
+	volatile uint8_t devState;	// 0 - not running, 1 - running, 2 - terminating
 	
 	AudioStreamBasicDescription waveFmt;
-	UINT32 bufSmpls;
-	UINT32 bufSize;
-	UINT32 bufCount;
-	UINT32 bufNum;
+	uint32_t bufSmpls;
+	uint32_t bufSize;
+	uint32_t bufCount;
+	uint32_t bufNum;
 	
 	LWAU_MUTEX* hMutex;
 	AudioQueueRef audioQueue;
@@ -36,25 +36,25 @@ typedef struct _coreaudio_driver
 } DRV_CA;
 
 
-UINT8 lwaodCoreAudio_IsAvailable(void);
-UINT8 lwaodCoreAudio_Init(void);
-UINT8 lwaodCoreAudio_Deinit(void);
+uint8_t lwaodCoreAudio_IsAvailable(void);
+uint8_t lwaodCoreAudio_Init(void);
+uint8_t lwaodCoreAudio_Deinit(void);
 const LWAO_DEV_LIST* lwaodCoreAudio_GetDeviceList(void);
 LWAO_OPTS* lwaodCoreAudio_GetDefaultOpts(void);
 
-UINT8 lwaodCoreAudio_Create(void** retDrvObj);
-UINT8 lwaodCoreAudio_Destroy(void* drvObj);
-UINT8 lwaodCoreAudio_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 lwaodCoreAudio_Stop(void* drvObj);
-UINT8 lwaodCoreAudio_Pause(void* drvObj);
-UINT8 lwaodCoreAudio_Resume(void* drvObj);
+uint8_t lwaodCoreAudio_Create(void** retDrvObj);
+uint8_t lwaodCoreAudio_Destroy(void* drvObj);
+uint8_t lwaodCoreAudio_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam);
+uint8_t lwaodCoreAudio_Stop(void* drvObj);
+uint8_t lwaodCoreAudio_Pause(void* drvObj);
+uint8_t lwaodCoreAudio_Resume(void* drvObj);
 
-UINT8 lwaodCoreAudio_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 lwaodCoreAudio_GetBufferSize(void* drvObj);
-UINT8 lwaodCoreAudio_IsBusy(void* drvObj);
-UINT8 lwaodCoreAudio_WriteData(void* drvObj, UINT32 dataSize, void* data);
+uint8_t lwaodCoreAudio_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+uint32_t lwaodCoreAudio_GetBufferSize(void* drvObj);
+uint8_t lwaodCoreAudio_IsBusy(void* drvObj);
+uint8_t lwaodCoreAudio_WriteData(void* drvObj, uint32_t dataSize, void* data);
 
-UINT32 lwaodCoreAudio_GetLatency(void* drvObj);
+uint32_t lwaodCoreAudio_GetLatency(void* drvObj);
 
 LWAO_DRIVER lwaoDrv_CA =
 {
@@ -75,26 +75,26 @@ LWAO_DRIVER lwaoDrv_CA =
 };
 
 static char* caDevNames[1] = {"default"};
-static UINT32 caDevice;
+static uint32_t caDevice;
 static LWAO_OPTS defOptions;
 static LWAO_DEV_LIST deviceList;
 
-static UINT8 isInit = 0;
-static UINT32 activeDrivers;
+static uint8_t isInit = 0;
+static uint32_t activeDrivers;
 
 static void lwaodCoreAudio_RenderOutputBuffer(void *userData, AudioQueueRef queue, AudioQueueBufferRef buffer);
 
-UINT8 lwaodCoreAudio_IsAvailable(void)
+uint8_t lwaodCoreAudio_IsAvailable(void)
 {
 	return 1;
 }
 
-UINT8 lwaodCoreAudio_Init(void)
+uint8_t lwaodCoreAudio_Init(void)
 {
 	// TODO: generate a list of all Core Audio devices
-	//UINT32 numDevs;
-	//UINT32 curDev;
-	//UINT32 devLstID;
+	//uint32_t numDevs;
+	//uint32_t curDev;
+	//uint32_t devLstID;
 	
 	if (isInit)
 		return LWAO_ERR_WASDONE;
@@ -117,9 +117,9 @@ UINT8 lwaodCoreAudio_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodCoreAudio_Deinit(void)
+uint8_t lwaodCoreAudio_Deinit(void)
 {
-	//UINT32 curDev;
+	//uint32_t curDev;
 	
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -143,10 +143,10 @@ LWAO_OPTS* lwaodCoreAudio_GetDefaultOpts(void)
 }
 
 
-UINT8 lwaodCoreAudio_Create(void** retDrvObj)
+uint8_t lwaodCoreAudio_Create(void** retDrvObj)
 {
 	DRV_CA* drv;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	
 	drv = (DRV_CA*)malloc(sizeof(DRV_CA));
 	drv->devState = 0;
@@ -171,7 +171,7 @@ UINT8 lwaodCoreAudio_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodCoreAudio_Destroy(void* drvObj)
+uint8_t lwaodCoreAudio_Destroy(void* drvObj)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
 	
@@ -186,14 +186,14 @@ UINT8 lwaodCoreAudio_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodCoreAudio_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+uint8_t lwaodCoreAudio_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
-	UINT64 tempInt64;
+	uint64_t tempInt64;
 	int retVal;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	OSStatus res;
-	UINT32 i;
+	uint32_t i;
 	
 	if (drv->devState != 0)
 		return 0xD0;	// already running
@@ -210,8 +210,8 @@ UINT8 lwaodCoreAudio_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, vo
 	drv->waveFmt.mChannelsPerFrame = options->numChannels;
 	drv->waveFmt.mBitsPerChannel = options->numBitsPerSmpl;
 
-	tempInt64 = (UINT64)options->sampleRate * options->usecPerBuf;
-	drv->bufSmpls = (UINT32)((tempInt64 + 500000) / 1000000);
+	tempInt64 = (uint64_t)options->sampleRate * options->usecPerBuf;
+	drv->bufSmpls = (uint32_t)((tempInt64 + 500000) / 1000000);
 	drv->bufSize = drv->waveFmt.mBytesPerPacket * drv->bufSmpls;
 	drv->bufCount = options->numBuffers ? options->numBuffers : 10;
 
@@ -247,7 +247,7 @@ UINT8 lwaodCoreAudio_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, vo
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodCoreAudio_Stop(void* drvObj)
+uint8_t lwaodCoreAudio_Stop(void* drvObj)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
 	OSStatus res;
@@ -266,7 +266,7 @@ UINT8 lwaodCoreAudio_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodCoreAudio_Pause(void* drvObj)
+uint8_t lwaodCoreAudio_Pause(void* drvObj)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
 	OSStatus res;
@@ -281,7 +281,7 @@ UINT8 lwaodCoreAudio_Pause(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodCoreAudio_Resume(void* drvObj)
+uint8_t lwaodCoreAudio_Resume(void* drvObj)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
 	OSStatus res;
@@ -297,7 +297,7 @@ UINT8 lwaodCoreAudio_Resume(void* drvObj)
 }
 
 
-UINT8 lwaodCoreAudio_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+uint8_t lwaodCoreAudio_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
 	
@@ -309,14 +309,14 @@ UINT8 lwaodCoreAudio_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback,
 	return LWAO_ERR_OK;
 }
 
-UINT32 lwaodCoreAudio_GetBufferSize(void* drvObj)
+uint32_t lwaodCoreAudio_GetBufferSize(void* drvObj)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 lwaodCoreAudio_IsBusy(void* drvObj)
+uint8_t lwaodCoreAudio_IsBusy(void* drvObj)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
 	
@@ -327,11 +327,11 @@ UINT8 lwaodCoreAudio_IsBusy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodCoreAudio_WriteData(void* drvObj, UINT32 dataSize, void* data)
+uint8_t lwaodCoreAudio_WriteData(void* drvObj, uint32_t dataSize, void* data)
 {
 	DRV_CA* drv = (DRV_CA*)drvObj;
 	OSStatus res;
-	UINT32 bufNum;
+	uint32_t bufNum;
 	
 	if (dataSize > drv->bufSize)
 		return LWAO_ERR_TOO_MUCH_DATA;
@@ -352,7 +352,7 @@ UINT8 lwaodCoreAudio_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 lwaodCoreAudio_GetLatency(void* drvObj)
+uint32_t lwaodCoreAudio_GetLatency(void* drvObj)
 {
 	//DRV_AO* drv = (DRV_AO*)drvObj;
 

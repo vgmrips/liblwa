@@ -16,7 +16,7 @@
 #include <xaudio2.h>
 #include <mmsystem.h>	// for WAVEFORMATEX
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 #include "lwao.h"
 #include "../utils/lwauThread.h"
@@ -29,14 +29,14 @@
 typedef struct _xaudio2_driver
 {
 	void* audDrvPtr;
-	volatile UINT8 devState;	// 0 - not running, 1 - running, 2 - terminating
-	UINT16 dummy;	// [for alignment purposes]
+	volatile uint8_t devState;	// 0 - not running, 1 - running, 2 - terminating
+	uint16_t dummy;	// [for alignment purposes]
 	
 	WAVEFORMATEX waveFmt;
-	UINT32 bufSmpls;
-	UINT32 bufSize;
-	UINT32 bufCount;
-	UINT8* bufSpace;
+	uint32_t bufSmpls;
+	uint32_t bufSize;
+	uint32_t bufCount;
+	uint8_t* bufSpace;
 	
 	IXAudio2* xAudIntf;
 	IXAudio2MasteringVoice* xaMstVoice;
@@ -48,29 +48,29 @@ typedef struct _xaudio2_driver
 	void* userParam;
 	LWAOFUNC_FILLBUF FillBuffer;
 	
-	UINT32 writeBuf;
+	uint32_t writeBuf;
 } DRV_XAUD2;
 
 
-EXT_C UINT8 lwaodXAudio2_IsAvailable(void);
-EXT_C UINT8 lwaodXAudio2_Init(void);
-EXT_C UINT8 lwaodXAudio2_Deinit(void);
+EXT_C uint8_t lwaodXAudio2_IsAvailable(void);
+EXT_C uint8_t lwaodXAudio2_Init(void);
+EXT_C uint8_t lwaodXAudio2_Deinit(void);
 EXT_C const LWAO_DEV_LIST* lwaodXAudio2_GetDeviceList(void);
 EXT_C LWAO_OPTS* lwaodXAudio2_GetDefaultOpts(void);
 
-EXT_C UINT8 lwaodXAudio2_Create(void** retDrvObj);
-EXT_C UINT8 lwaodXAudio2_Destroy(void* drvObj);
-EXT_C UINT8 lwaodXAudio2_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-EXT_C UINT8 lwaodXAudio2_Stop(void* drvObj);
-EXT_C UINT8 lwaodXAudio2_Pause(void* drvObj);
-EXT_C UINT8 lwaodXAudio2_Resume(void* drvObj);
+EXT_C uint8_t lwaodXAudio2_Create(void** retDrvObj);
+EXT_C uint8_t lwaodXAudio2_Destroy(void* drvObj);
+EXT_C uint8_t lwaodXAudio2_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam);
+EXT_C uint8_t lwaodXAudio2_Stop(void* drvObj);
+EXT_C uint8_t lwaodXAudio2_Pause(void* drvObj);
+EXT_C uint8_t lwaodXAudio2_Resume(void* drvObj);
 
-EXT_C UINT8 lwaodXAudio2_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-EXT_C UINT32 lwaodXAudio2_GetBufferSize(void* drvObj);
-EXT_C UINT8 lwaodXAudio2_IsBusy(void* drvObj);
-EXT_C UINT8 lwaodXAudio2_WriteData(void* drvObj, UINT32 dataSize, void* data);
+EXT_C uint8_t lwaodXAudio2_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+EXT_C uint32_t lwaodXAudio2_GetBufferSize(void* drvObj);
+EXT_C uint8_t lwaodXAudio2_IsBusy(void* drvObj);
+EXT_C uint8_t lwaodXAudio2_WriteData(void* drvObj, uint32_t dataSize, void* data);
 
-EXT_C UINT32 lwaodXAudio2_GetLatency(void* drvObj);
+EXT_C uint32_t lwaodXAudio2_GetLatency(void* drvObj);
 static void LWA_API XAudio2Thread(void* Arg);
 
 
@@ -98,21 +98,21 @@ LWAO_DRIVER lwaoDrv_XAudio2 =
 
 static LWAO_OPTS defOptions;
 static LWAO_DEV_LIST deviceList;
-static UINT32* devListIDs;
+static uint32_t* devListIDs;
 
-static UINT8 isInit = 0;
-static UINT32 activeDrivers;
+static uint8_t isInit = 0;
+static uint32_t activeDrivers;
 
-UINT8 lwaodXAudio2_IsAvailable(void)
+uint8_t lwaodXAudio2_IsAvailable(void)
 {
 	return 1;
 }
 
-UINT8 lwaodXAudio2_Init(void)
+uint8_t lwaodXAudio2_Init(void)
 {
 	HRESULT retVal;
-	UINT32 curDev;
-	UINT32 devLstID;
+	uint32_t curDev;
+	uint32_t devLstID;
 	size_t devNameSize;
 	IXAudio2* xAudIntf;
 	XAUDIO2_DEVICE_DETAILS xDevData;
@@ -142,7 +142,7 @@ UINT8 lwaodXAudio2_Init(void)
 		return LWAO_ERR_API_ERR;
 	}
 	deviceList.devNames = (char**)malloc(deviceList.devCount * sizeof(char*));
-	devListIDs = (UINT32*)malloc(deviceList.devCount * sizeof(UINT32));
+	devListIDs = (uint32_t*)malloc(deviceList.devCount * sizeof(uint32_t));
 	devLstID = 0;
 	for (curDev = 0; curDev < deviceList.devCount; curDev ++)
 	{
@@ -174,9 +174,9 @@ UINT8 lwaodXAudio2_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodXAudio2_Deinit(void)
+uint8_t lwaodXAudio2_Deinit(void)
 {
-	UINT32 curDev;
+	uint32_t curDev;
 	
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -204,10 +204,10 @@ LWAO_OPTS* lwaodXAudio2_GetDefaultOpts(void)
 }
 
 
-UINT8 lwaodXAudio2_Create(void** retDrvObj)
+uint8_t lwaodXAudio2_Create(void** retDrvObj)
 {
 	DRV_XAUD2* drv;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	
 	drv = (DRV_XAUD2*)malloc(sizeof(DRV_XAUD2));
 	drv->devState = 0;
@@ -235,7 +235,7 @@ UINT8 lwaodXAudio2_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodXAudio2_Destroy(void* drvObj)
+uint8_t lwaodXAudio2_Destroy(void* drvObj)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	
@@ -257,14 +257,14 @@ UINT8 lwaodXAudio2_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodXAudio2_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+uint8_t lwaodXAudio2_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
-	UINT64 tempInt64;
-	UINT32 curBuf;
+	uint64_t tempInt64;
+	uint32_t curBuf;
 	XAUDIO2_BUFFER* tempXABuf;
 	HRESULT retVal;
-	UINT8 retVal8;
+	uint8_t retVal8;
 #ifdef NDEBUG
 	HANDLE hWinThr;
 	BOOL retValB;
@@ -286,8 +286,8 @@ UINT8 lwaodXAudio2_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void
 	drv->waveFmt.nAvgBytesPerSec = drv->waveFmt.nSamplesPerSec * drv->waveFmt.nBlockAlign;
 	drv->waveFmt.cbSize = 0;
 	
-	tempInt64 = (UINT64)options->sampleRate * options->usecPerBuf;
-	drv->bufSmpls = (UINT32)((tempInt64 + 500000) / 1000000);
+	tempInt64 = (uint64_t)options->sampleRate * options->usecPerBuf;
+	drv->bufSmpls = (uint32_t)((tempInt64 + 500000) / 1000000);
 	drv->bufSize = drv->waveFmt.nBlockAlign * drv->bufSmpls;
 	drv->bufCount = options->numBuffers ? options->numBuffers : 10;
 	
@@ -324,7 +324,7 @@ UINT8 lwaodXAudio2_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void
 #endif
 	
 	drv->xaBufs = (XAUDIO2_BUFFER*)calloc(drv->bufCount, sizeof(XAUDIO2_BUFFER));
-	drv->bufSpace = (UINT8*)malloc(drv->bufCount * drv->bufSize);
+	drv->bufSpace = (uint8_t*)malloc(drv->bufCount * drv->bufSize);
 	for (curBuf = 0; curBuf < drv->bufCount; curBuf ++)
 	{
 		tempXABuf = &drv->xaBufs[curBuf];
@@ -343,7 +343,7 @@ UINT8 lwaodXAudio2_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodXAudio2_Stop(void* drvObj)
+uint8_t lwaodXAudio2_Stop(void* drvObj)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	HRESULT retVal;
@@ -371,7 +371,7 @@ UINT8 lwaodXAudio2_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodXAudio2_Pause(void* drvObj)
+uint8_t lwaodXAudio2_Pause(void* drvObj)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	HRESULT retVal;
@@ -383,7 +383,7 @@ UINT8 lwaodXAudio2_Pause(void* drvObj)
 	return (retVal == S_OK) ? LWAO_ERR_OK : 0xFF;
 }
 
-UINT8 lwaodXAudio2_Resume(void* drvObj)
+uint8_t lwaodXAudio2_Resume(void* drvObj)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	HRESULT retVal;
@@ -396,7 +396,7 @@ UINT8 lwaodXAudio2_Resume(void* drvObj)
 }
 
 
-UINT8 lwaodXAudio2_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+uint8_t lwaodXAudio2_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	
@@ -408,14 +408,14 @@ UINT8 lwaodXAudio2_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, v
 	return LWAO_ERR_OK;
 }
 
-UINT32 lwaodXAudio2_GetBufferSize(void* drvObj)
+uint32_t lwaodXAudio2_GetBufferSize(void* drvObj)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 lwaodXAudio2_IsBusy(void* drvObj)
+uint8_t lwaodXAudio2_IsBusy(void* drvObj)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	XAUDIO2_VOICE_STATE xaVocState;
@@ -427,7 +427,7 @@ UINT8 lwaodXAudio2_IsBusy(void* drvObj)
 	return (xaVocState.BuffersQueued < drv->bufCount) ? LWAO_ERR_OK : LWAO_ERR_BUSY;
 }
 
-UINT8 lwaodXAudio2_WriteData(void* drvObj, UINT32 dataSize, void* data)
+uint8_t lwaodXAudio2_WriteData(void* drvObj, uint32_t dataSize, void* data)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	XAUDIO2_BUFFER* tempXABuf;
@@ -456,13 +456,13 @@ UINT8 lwaodXAudio2_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 lwaodXAudio2_GetLatency(void* drvObj)
+uint32_t lwaodXAudio2_GetLatency(void* drvObj)
 {
 	DRV_XAUD2* drv = (DRV_XAUD2*)drvObj;
 	XAUDIO2_VOICE_STATE xaVocState;
-	UINT32 bufBehind;
-	UINT32 bytesBehind;
-	UINT32 curBuf;
+	uint32_t bufBehind;
+	uint32_t bytesBehind;
+	uint32_t curBuf;
 	
 	drv->xaSrcVoice->GetState(&xaVocState);
 	
@@ -485,7 +485,7 @@ static void LWA_API XAudio2Thread(void* Arg)
 	DRV_XAUD2* drv = (DRV_XAUD2*)Arg;
 	XAUDIO2_VOICE_STATE xaVocState;
 	XAUDIO2_BUFFER* tempXABuf;
-	UINT32 didBuffers;	// number of processed buffers
+	uint32_t didBuffers;	// number of processed buffers
 	HRESULT retVal;
 	
 	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done

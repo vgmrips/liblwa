@@ -48,19 +48,19 @@ extern "C"
  *
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaoInit(void);
+LWAO_EXPORT uint8_t LWA_API lwaoInit(void);
 /**
  * @brief Deinitializes the audio output system.
  *
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaoDeinit(void);
+LWAO_EXPORT uint8_t LWA_API lwaoDeinit(void);
 /**
  * @brief Retrieve the number of loaded audio drivers.
  *
  * @return number of loaded audio drivers
  */
-LWAO_EXPORT UINT32 LWA_API lwaoGetDriverCount(void);
+LWAO_EXPORT uint32_t LWA_API lwaoGetDriverCount(void);
 /**
  * @brief Retrieve information about a certain audio driver.
  *
@@ -68,7 +68,7 @@ LWAO_EXPORT UINT32 LWA_API lwaoGetDriverCount(void);
  * @param retDrvInfo buffer for returning driver information
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaoGetDriverInfo(UINT32 drvID, LWAO_DINFO** retDrvInfo);
+LWAO_EXPORT uint8_t LWA_API lwaoGetDriverInfo(uint32_t drvID, LWAO_DINFO** retDrvInfo);
 
 /**
  * @brief Creates an audio driver instance and initializes it.
@@ -77,14 +77,14 @@ LWAO_EXPORT UINT8 LWA_API lwaoGetDriverInfo(UINT32 drvID, LWAO_DINFO** retDrvInf
  * @param retDrvStruct buffer for returning the audio driver instance
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaodInit(UINT32 drvID, void** retDrvStruct);
+LWAO_EXPORT uint8_t LWA_API lwaodInit(uint32_t drvID, void** retDrvStruct);
 /**
  * @brief Deinitializes and destroys an audio driver instance.
  *
  * @param drvStruct pointer to audio driver instance
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaodDeinit(void** drvStruct);
+LWAO_EXPORT uint8_t LWA_API lwaodDeinit(void** drvStruct);
 /**
  * @brief Retrieve the list of devices supported by an audio driver.
  *
@@ -114,28 +114,28 @@ LWAO_EXPORT void* LWA_API lwaodGetDrvData(void* drvStruct);
  * @param devID ID of the audio driver's device to be used
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaodStart(void* drvStruct, UINT32 devID);
+LWAO_EXPORT uint8_t LWA_API lwaodStart(void* drvStruct, uint32_t devID);
 /**
  * @brief Stops the audio stream and close the device.
  *
  * @param drvStruct audio driver instance
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaodStop(void* drvStruct);
+LWAO_EXPORT uint8_t LWA_API lwaodStop(void* drvStruct);
 /**
  * @brief Pause the audio stream.
  *
  * @param drvStruct audio driver instance
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaodPause(void* drvStruct);
+LWAO_EXPORT uint8_t LWA_API lwaodPause(void* drvStruct);
 /**
  * @brief Resume the audio stream.
  *
  * @param drvStruct audio driver instance
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaodResume(void* drvStruct);
+LWAO_EXPORT uint8_t LWA_API lwaodResume(void* drvStruct);
 
 /**
  * @brief Sets a callback function that is called whenever a buffer is free.
@@ -145,7 +145,7 @@ LWAO_EXPORT UINT8 LWA_API lwaodResume(void* drvStruct);
  * @param userParam pointer to user data
  * @return error code. 0 = success, see LWAO_ERR constants
  */
-LWAO_EXPORT UINT8 LWA_API lwaodSetCallback(void* drvStruct, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+LWAO_EXPORT uint8_t LWA_API lwaodSetCallback(void* drvStruct, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
 
 /**
  * @brief Returns the maximum number of bytes that can be written using lwaodWriteData().
@@ -154,14 +154,14 @@ LWAO_EXPORT UINT8 LWA_API lwaodSetCallback(void* drvStruct, LWAOFUNC_FILLBUF Fil
  * @param drvStruct audio driver instance
  * @return current buffer size in bytes
  */
-LWAO_EXPORT UINT32 LWA_API lwaodGetBufferSize(void* drvStruct);
+LWAO_EXPORT uint32_t LWA_API lwaodGetBufferSize(void* drvStruct);
 /**
  * @brief Checks whether you can send more data to the audio driver or not.
  *
  * @param drvStruct audio driver instance
  * @return LWAO_ERR_OK: ready for more data, LWAO_ERR_BUSY: busy playing previous data, see LWAO_ERR constants for more error codes
  */
-LWAO_EXPORT UINT8 LWA_API lwaodIsBusy(void* drvStruct);
+LWAO_EXPORT uint8_t LWA_API lwaodIsBusy(void* drvStruct);
 /**
  * @brief Sends data to the audio driver in order to be played.
  *
@@ -170,14 +170,14 @@ LWAO_EXPORT UINT8 LWA_API lwaodIsBusy(void* drvStruct);
  * @param data sample data to be sent
  * @return latency in milliseconds
  */
-LWAO_EXPORT UINT8 LWA_API lwaodWriteData(void* drvStruct, UINT32 dataSize, void* data);
+LWAO_EXPORT uint8_t LWA_API lwaodWriteData(void* drvStruct, uint32_t dataSize, void* data);
 /**
  * @brief Returns the current latency of the audio device in milliseconds.
  *
  * @param drvStruct audio driver instance
  * @return latency in milliseconds
  */
-LWAO_EXPORT UINT32 LWA_API lwaodGetLatency(void* drvStruct);
+LWAO_EXPORT uint32_t LWA_API lwaodGetLatency(void* drvStruct);
 
 #ifdef __cplusplus
 }

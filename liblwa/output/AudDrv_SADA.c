@@ -14,7 +14,7 @@
 #define	Sleep(msec)	usleep(msec * 1000)
 #endif
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 #include "lwao.h"
 #include "../utils/lwauThread.h"
@@ -24,12 +24,12 @@
 
 typedef struct
 {
-	UINT16 wFormatTag;
-	UINT16 nChannels;
-	UINT32 nSamplesPerSec;
-	UINT32 nAvgBytesPerSec;
-	UINT16 nBlockAlign;
-	UINT16 wBitsPerSample;
+	uint16_t wFormatTag;
+	uint16_t nChannels;
+	uint32_t nSamplesPerSec;
+	uint32_t nAvgBytesPerSec;
+	uint16_t nBlockAlign;
+	uint16_t wBitsPerSample;
 } WAVEFORMAT;	// from MSDN Help
 
 #define WAVE_FORMAT_PCM	0x0001
@@ -38,13 +38,13 @@ typedef struct
 typedef struct _sada_driver
 {
 	void* audDrvPtr;
-	volatile UINT8 devState;	// 0 - not running, 1 - running, 2 - terminating
+	volatile uint8_t devState;	// 0 - not running, 1 - running, 2 - terminating
 	
 	WAVEFORMAT waveFmt;
-	UINT32 bufSmpls;
-	UINT32 bufSize;
-	UINT32 bufCount;
-	UINT8* bufSpace;
+	uint32_t bufSmpls;
+	uint32_t bufSize;
+	uint32_t bufCount;
+	uint8_t* bufSpace;
 	
 #ifdef ENABLE_SADA_THREAD
 	LWAU_THREAD* hThread;
@@ -52,7 +52,7 @@ typedef struct _sada_driver
 	LWAU_SIGNAL* hSignal;
 	LWAU_MUTEX* hMutex;
 	int hFileDSP;
-	volatile UINT8 pauseThread;
+	volatile uint8_t pauseThread;
 	
 	void* userParam;
 	LWAOFUNC_FILLBUF FillBuffer;
@@ -60,25 +60,25 @@ typedef struct _sada_driver
 } DRV_SADA;
 
 
-UINT8 lwaodSADA_IsAvailable(void);
-UINT8 lwaodSADA_Init(void);
-UINT8 lwaodSADA_Deinit(void);
+uint8_t lwaodSADA_IsAvailable(void);
+uint8_t lwaodSADA_Init(void);
+uint8_t lwaodSADA_Deinit(void);
 const LWAO_DEV_LIST* lwaodSADA_GetDeviceList(void);
 LWAO_OPTS* lwaodSADA_GetDefaultOpts(void);
 
-UINT8 lwaodSADA_Create(void** retDrvObj);
-UINT8 lwaodSADA_Destroy(void* drvObj);
-UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 lwaodSADA_Stop(void* drvObj);
-UINT8 lwaodSADA_Pause(void* drvObj);
-UINT8 lwaodSADA_Resume(void* drvObj);
+uint8_t lwaodSADA_Create(void** retDrvObj);
+uint8_t lwaodSADA_Destroy(void* drvObj);
+uint8_t lwaodSADA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam);
+uint8_t lwaodSADA_Stop(void* drvObj);
+uint8_t lwaodSADA_Pause(void* drvObj);
+uint8_t lwaodSADA_Resume(void* drvObj);
 
-UINT8 lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 lwaodSADA_GetBufferSize(void* drvObj);
-UINT8 lwaodSADA_IsBusy(void* drvObj);
-UINT8 lwaodSADA_WriteData(void* drvObj, UINT32 dataSize, void* data);
+uint8_t lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+uint32_t lwaodSADA_GetBufferSize(void* drvObj);
+uint8_t lwaodSADA_IsBusy(void* drvObj);
+uint8_t lwaodSADA_WriteData(void* drvObj, uint32_t dataSize, void* data);
 
-UINT32 lwaodSADA_GetLatency(void* drvObj);
+uint32_t lwaodSADA_GetLatency(void* drvObj);
 static void LWA_API SadaThread(void* Arg);
 
 
@@ -105,10 +105,10 @@ static char* ossDevNames[1] = {"/dev/audio"};
 static LWAO_OPTS defOptions;
 static LWAO_DEV_LIST deviceList;
 
-static UINT8 isInit = 0;
-static UINT32 activeDrivers;
+static uint8_t isInit = 0;
+static uint32_t activeDrivers;
 
-UINT8 lwaodSADA_IsAvailable(void)
+uint8_t lwaodSADA_IsAvailable(void)
 {
 	int hFile;
 	
@@ -120,7 +120,7 @@ UINT8 lwaodSADA_IsAvailable(void)
 	return 1;
 }
 
-UINT8 lwaodSADA_Init(void)
+uint8_t lwaodSADA_Init(void)
 {
 	if (isInit)
 		return LWAO_ERR_WASDONE;
@@ -143,7 +143,7 @@ UINT8 lwaodSADA_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodSADA_Deinit(void)
+uint8_t lwaodSADA_Deinit(void)
 {
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -167,10 +167,10 @@ LWAO_OPTS* lwaodSADA_GetDefaultOpts(void)
 }
 
 
-UINT8 lwaodSADA_Create(void** retDrvObj)
+uint8_t lwaodSADA_Create(void** retDrvObj)
 {
 	DRV_SADA* drv;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	
 	drv = (DRV_SADA*)malloc(sizeof(DRV_SADA));
 	drv->devState = 0;
@@ -197,7 +197,7 @@ UINT8 lwaodSADA_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodSADA_Destroy(void* drvObj)
+uint8_t lwaodSADA_Destroy(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -221,13 +221,13 @@ UINT8 lwaodSADA_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+uint8_t lwaodSADA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
-	UINT64 tempInt64;
+	uint64_t tempInt64;
 	int retVal;
 #ifdef ENABLE_OSS_THREAD
-	UINT8 retVal8;
+	uint8_t retVal8;
 #endif
 	
 	if (drv->devState != 0)
@@ -243,8 +243,8 @@ UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* a
 	drv->waveFmt.nBlockAlign = drv->waveFmt.wBitsPerSample * drv->waveFmt.nChannels / 8;
 	drv->waveFmt.nAvgBytesPerSec = drv->waveFmt.nSamplesPerSec * drv->waveFmt.nBlockAlign;
 	
-	tempInt64 = (UINT64)options->sampleRate * options->usecPerBuf;
-	drv->bufSmpls = (UINT32)((tempInt64 + 500000) / 1000000);
+	tempInt64 = (uint64_t)options->sampleRate * options->usecPerBuf;
+	drv->bufSmpls = (uint32_t)((tempInt64 + 500000) / 1000000);
 	drv->bufSize = drv->waveFmt.nBlockAlign * drv->bufSmpls;
 	drv->bufCount = options->numBuffers ? options->numBuffers : 10;
 	
@@ -280,7 +280,7 @@ UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* a
 	}
 #endif
 	
-	drv->bufSpace = (UINT8*)malloc(drv->bufSize);
+	drv->bufSpace = (uint8_t*)malloc(drv->bufSize);
 	
 	drv->devState = 1;
 	drv->pauseThread = 0x00;
@@ -289,7 +289,7 @@ UINT8 lwaodSADA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* a
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodSADA_Stop(void* drvObj)
+uint8_t lwaodSADA_Stop(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	int retVal;
@@ -315,7 +315,7 @@ UINT8 lwaodSADA_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodSADA_Pause(void* drvObj)
+uint8_t lwaodSADA_Pause(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -326,7 +326,7 @@ UINT8 lwaodSADA_Pause(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodSADA_Resume(void* drvObj)
+uint8_t lwaodSADA_Resume(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -338,7 +338,7 @@ UINT8 lwaodSADA_Resume(void* drvObj)
 }
 
 
-UINT8 lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+uint8_t lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -356,14 +356,14 @@ UINT8 lwaodSADA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void
 #endif
 }
 
-UINT32 lwaodSADA_GetBufferSize(void* drvObj)
+uint32_t lwaodSADA_GetBufferSize(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 lwaodSADA_IsBusy(void* drvObj)
+uint8_t lwaodSADA_IsBusy(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	
@@ -374,7 +374,7 @@ UINT8 lwaodSADA_IsBusy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodSADA_WriteData(void* drvObj, UINT32 dataSize, void* data)
+uint8_t lwaodSADA_WriteData(void* drvObj, uint32_t dataSize, void* data)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	ssize_t wrtBytes;
@@ -389,7 +389,7 @@ UINT8 lwaodSADA_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 lwaodSADA_GetLatency(void* drvObj)
+uint32_t lwaodSADA_GetLatency(void* drvObj)
 {
 	DRV_SADA* drv = (DRV_SADA*)drvObj;
 	int retVal;
@@ -407,8 +407,8 @@ UINT32 lwaodSADA_GetLatency(void* drvObj)
 static void LWA_API SadaThread(void* Arg)
 {
 	DRV_SADA* drv = (DRV_SADA*)Arg;
-	UINT32 didBuffers;	// number of processed buffers
-	UINT32 bufBytes;
+	uint32_t didBuffers;	// number of processed buffers
+	uint32_t bufBytes;
 	ssize_t wrtBytes;
 	
 	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done

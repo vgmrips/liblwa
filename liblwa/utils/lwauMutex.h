@@ -11,7 +11,7 @@ extern "C"
 {
 #endif
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 #include "lwau_export.h"
 #include "../lwa_api.h"
 
@@ -25,7 +25,7 @@ typedef struct _lwau_mutex LWAU_MUTEX;
  * @param initLocked Initial state of the mutex. 0 = unlocked, 1 = locked
  * @return error code. 0 = success, other values = error
  */
-LWAU_EXPORT UINT8 LWA_API lwauMutex_Init(LWAU_MUTEX** retMutex, UINT8 initLocked);
+LWAU_EXPORT uint8_t LWA_API lwauMutex_Init(LWAU_MUTEX** retMutex, uint8_t initLocked);
 /**
  * @brief Destroys a mutex object.
  *
@@ -38,21 +38,21 @@ LWAU_EXPORT void LWA_API lwauMutex_Deinit(LWAU_MUTEX* mtx);
  * @param mtx mutex object pointer
  * @return error code. 0 = success, 0xFF = error
  */
-LWAU_EXPORT UINT8 LWA_API lwauMutex_Lock(LWAU_MUTEX* mtx);
+LWAU_EXPORT uint8_t LWA_API lwauMutex_Lock(LWAU_MUTEX* mtx);
 /**
  * @brief Tries to lock a mutex. Returns immediately if the mutex is already locked.
  *
  * @param mtx mutex object pointer
  * @return error code. 0 = success, 1 = mutex is already locked, 0xFF = error
  */
-LWAU_EXPORT UINT8 LWA_API lwauMutex_TryLock(LWAU_MUTEX* mtx);
+LWAU_EXPORT uint8_t LWA_API lwauMutex_TryLock(LWAU_MUTEX* mtx);
 /**
  * @brief Unlocks a mutex.
  *
  * @param mtx mutex object pointer
  * @return error code. 0 = success, 0xFF = error
  */
-LWAU_EXPORT UINT8 LWA_API lwauMutex_Unlock(LWAU_MUTEX* mtx);
+LWAU_EXPORT uint8_t LWA_API lwauMutex_Unlock(LWAU_MUTEX* mtx);
 
 #ifdef __cplusplus
 }

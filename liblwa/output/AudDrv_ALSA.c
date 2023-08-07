@@ -10,7 +10,7 @@
 #include <unistd.h>		// for usleep()
 #define	Sleep(msec)	usleep(msec * 1000)
 
-#include "../stdtype.h"
+#include "../lwa_types.h"
 
 #include "lwao.h"
 #include "../utils/lwauThread.h"
@@ -20,12 +20,12 @@
 
 typedef struct
 {
-	UINT16 wFormatTag;
-	UINT16 nChannels;
-	UINT32 nSamplesPerSec;
-	UINT32 nAvgBytesPerSec;
-	UINT16 nBlockAlign;
-	UINT16 wBitsPerSample;
+	uint16_t wFormatTag;
+	uint16_t nChannels;
+	uint32_t nSamplesPerSec;
+	uint32_t nAvgBytesPerSec;
+	uint16_t nBlockAlign;
+	uint16_t wBitsPerSample;
 } WAVEFORMAT;	// from MSDN Help
 
 #define WAVE_FORMAT_PCM	0x0001
@@ -34,47 +34,47 @@ typedef struct
 typedef struct _alsa_driver
 {
 	void* audDrvPtr;
-	volatile UINT8 devState;	// 0 - not running, 1 - running, 2 - terminating
+	volatile uint8_t devState;	// 0 - not running, 1 - running, 2 - terminating
 	
 	WAVEFORMAT waveFmt;
-	UINT32 bufSmpls;
-	UINT32 bufSize;
-	UINT32 bufCount;
-	UINT8* bufSpace;
+	uint32_t bufSmpls;
+	uint32_t bufSize;
+	uint32_t bufCount;
+	uint8_t* bufSpace;
 	
 	LWAU_THREAD* hThread;
 	LWAU_SIGNAL* hSignal;
 	LWAU_MUTEX* hMutex;
 	snd_pcm_t* hPCM;
-	volatile UINT8 pauseThread;
-	UINT8 canPause;
+	volatile uint8_t pauseThread;
+	uint8_t canPause;
 	
 	void* userParam;
 	LWAOFUNC_FILLBUF FillBuffer;
 } DRV_ALSA;
 
 
-UINT8 lwaodALSA_IsAvailable(void);
-UINT8 lwaodALSA_Init(void);
-UINT8 lwaodALSA_Deinit(void);
+uint8_t lwaodALSA_IsAvailable(void);
+uint8_t lwaodALSA_Init(void);
+uint8_t lwaodALSA_Deinit(void);
 const LWAO_DEV_LIST* lwaodALSA_GetDeviceList(void);
 LWAO_OPTS* lwaodALSA_GetDefaultOpts(void);
 
-UINT8 lwaodALSA_Create(void** retDrvObj);
-UINT8 lwaodALSA_Destroy(void* drvObj);
-UINT8 lwaodALSA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam);
-UINT8 lwaodALSA_Stop(void* drvObj);
-UINT8 lwaodALSA_Pause(void* drvObj);
-UINT8 lwaodALSA_Resume(void* drvObj);
+uint8_t lwaodALSA_Create(void** retDrvObj);
+uint8_t lwaodALSA_Destroy(void* drvObj);
+uint8_t lwaodALSA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam);
+uint8_t lwaodALSA_Stop(void* drvObj);
+uint8_t lwaodALSA_Pause(void* drvObj);
+uint8_t lwaodALSA_Resume(void* drvObj);
 
-UINT8 lwaodALSA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
-UINT32 lwaodALSA_GetBufferSize(void* drvObj);
-UINT8 lwaodALSA_IsBusy(void* drvObj);
-UINT8 lwaodALSA_WriteData(void* drvObj, UINT32 dataSize, void* data);
+uint8_t lwaodALSA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam);
+uint32_t lwaodALSA_GetBufferSize(void* drvObj);
+uint8_t lwaodALSA_IsBusy(void* drvObj);
+uint8_t lwaodALSA_WriteData(void* drvObj, uint32_t dataSize, void* data);
 
-UINT32 lwaodALSA_GetLatency(void* drvObj);
+uint32_t lwaodALSA_GetLatency(void* drvObj);
 static void LWA_API AlsaThread(void* Arg);
-static UINT8 WriteBuffer(DRV_ALSA* drv, UINT32 dataSize, void* data);
+static uint8_t WriteBuffer(DRV_ALSA* drv, uint32_t dataSize, void* data);
 
 
 LWAO_DRIVER lwaoDrv_ALSA =
@@ -100,19 +100,19 @@ static char* alsaDevNames[1] = {"default"};
 static LWAO_OPTS defOptions;
 static LWAO_DEV_LIST deviceList;
 
-static UINT8 isInit = 0;
-static UINT32 activeDrivers;
+static uint8_t isInit = 0;
+static uint32_t activeDrivers;
 
-UINT8 lwaodALSA_IsAvailable(void)
+uint8_t lwaodALSA_IsAvailable(void)
 {
 	return 1;
 }
 
-UINT8 lwaodALSA_Init(void)
+uint8_t lwaodALSA_Init(void)
 {
-	UINT32 numDevs;
-	UINT32 curDev;
-	UINT32 devLstID;
+	uint32_t numDevs;
+	uint32_t curDev;
+	uint32_t devLstID;
 	
 	if (isInit)
 		return LWAO_ERR_WASDONE;
@@ -137,9 +137,9 @@ UINT8 lwaodALSA_Init(void)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodALSA_Deinit(void)
+uint8_t lwaodALSA_Deinit(void)
 {
-	UINT32 curDev;
+	uint32_t curDev;
 	
 	if (! isInit)
 		return LWAO_ERR_WASDONE;
@@ -163,10 +163,10 @@ LWAO_OPTS* lwaodALSA_GetDefaultOpts(void)
 }
 
 
-UINT8 lwaodALSA_Create(void** retDrvObj)
+uint8_t lwaodALSA_Create(void** retDrvObj)
 {
 	DRV_ALSA* drv;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	
 	drv = (DRV_ALSA*)malloc(sizeof(DRV_ALSA));
 	drv->devState = 0;
@@ -191,7 +191,7 @@ UINT8 lwaodALSA_Create(void** retDrvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodALSA_Destroy(void* drvObj)
+uint8_t lwaodALSA_Destroy(void* drvObj)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	
@@ -213,12 +213,12 @@ UINT8 lwaodALSA_Destroy(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodALSA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* audDrvParam)
+uint8_t lwaodALSA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void* audDrvParam)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
-	UINT64 tempInt64;
+	uint64_t tempInt64;
 	int retVal;
-	UINT8 retVal8;
+	uint8_t retVal8;
 	snd_pcm_hw_params_t* sndParams;
 	snd_pcm_format_t sndPcmFmt;
 	snd_pcm_uframes_t periodSize;
@@ -239,8 +239,8 @@ UINT8 lwaodALSA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* a
 	drv->waveFmt.nBlockAlign = drv->waveFmt.wBitsPerSample * drv->waveFmt.nChannels / 8;
 	drv->waveFmt.nAvgBytesPerSec = drv->waveFmt.nSamplesPerSec * drv->waveFmt.nBlockAlign;
 	
-	tempInt64 = (UINT64)options->sampleRate * options->usecPerBuf;
-	drv->bufSmpls = (UINT32)((tempInt64 + 500000) / 1000000);
+	tempInt64 = (uint64_t)options->sampleRate * options->usecPerBuf;
+	drv->bufSmpls = (uint32_t)((tempInt64 + 500000) / 1000000);
 	//drv->bufSize = drv->waveFmt.nBlockAlign * drv->bufSmpls;
 	drv->bufCount = options->numBuffers ? options->numBuffers : 10;
 	
@@ -286,7 +286,7 @@ UINT8 lwaodALSA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* a
 		//printf("fix count %u, total %u (%u)\n", drv->bufCount, bufferSize, drv->bufCount * periodSize);
 	}
 	
-	drv->canPause = (UINT8)snd_pcm_hw_params_can_pause(sndParams);
+	drv->canPause = (uint8_t)snd_pcm_hw_params_can_pause(sndParams);
 	
 	retVal = snd_pcm_hw_params(drv->hPCM, sndParams);
 	// disabled for now, as it sometimes causes a double-free crash
@@ -306,7 +306,7 @@ UINT8 lwaodALSA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* a
 	}
 	
 	drv->bufSize = drv->waveFmt.nBlockAlign * drv->bufSmpls;
-	drv->bufSpace = (UINT8*)malloc(drv->bufSize);
+	drv->bufSpace = (uint8_t*)malloc(drv->bufSize);
 	
 	drv->devState = 1;
 	drv->pauseThread = 0x00;
@@ -315,7 +315,7 @@ UINT8 lwaodALSA_Start(void* drvObj, UINT32 deviceID, LWAO_OPTS* options, void* a
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodALSA_Stop(void* drvObj)
+uint8_t lwaodALSA_Stop(void* drvObj)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	int retVal;
@@ -344,7 +344,7 @@ UINT8 lwaodALSA_Stop(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodALSA_Pause(void* drvObj)
+uint8_t lwaodALSA_Pause(void* drvObj)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	int retVal;
@@ -362,7 +362,7 @@ UINT8 lwaodALSA_Pause(void* drvObj)
 	return LWAO_ERR_OK;
 }
 
-UINT8 lwaodALSA_Resume(void* drvObj)
+uint8_t lwaodALSA_Resume(void* drvObj)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	int retVal;
@@ -381,7 +381,7 @@ UINT8 lwaodALSA_Resume(void* drvObj)
 }
 
 
-UINT8 lwaodALSA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
+uint8_t lwaodALSA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void* userParam)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	
@@ -395,14 +395,14 @@ UINT8 lwaodALSA_SetCallback(void* drvObj, LWAOFUNC_FILLBUF FillBufCallback, void
 	return LWAO_ERR_OK;
 }
 
-UINT32 lwaodALSA_GetBufferSize(void* drvObj)
+uint32_t lwaodALSA_GetBufferSize(void* drvObj)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	
 	return drv->bufSize;
 }
 
-UINT8 lwaodALSA_IsBusy(void* drvObj)
+uint8_t lwaodALSA_IsBusy(void* drvObj)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	snd_pcm_sframes_t frmCount;
@@ -414,10 +414,10 @@ UINT8 lwaodALSA_IsBusy(void* drvObj)
 	return (frmCount > 0) ? LWAO_ERR_OK : LWAO_ERR_BUSY;
 }
 
-UINT8 lwaodALSA_WriteData(void* drvObj, UINT32 dataSize, void* data)
+uint8_t lwaodALSA_WriteData(void* drvObj, uint32_t dataSize, void* data)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
-	UINT8 retVal;
+	uint8_t retVal;
 	
 	if (dataSize > drv->bufSize)
 		return LWAO_ERR_TOO_MUCH_DATA;
@@ -429,7 +429,7 @@ UINT8 lwaodALSA_WriteData(void* drvObj, UINT32 dataSize, void* data)
 }
 
 
-UINT32 lwaodALSA_GetLatency(void* drvObj)
+uint32_t lwaodALSA_GetLatency(void* drvObj)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)drvObj;
 	int retVal;
@@ -444,7 +444,7 @@ UINT32 lwaodALSA_GetLatency(void* drvObj)
 static void LWA_API AlsaThread(void* Arg)
 {
 	DRV_ALSA* drv = (DRV_ALSA*)Arg;
-	UINT32 bufBytes;
+	uint32_t bufBytes;
 	int retVal;
 	
 	lwauSignal_Wait(drv->hSignal);	// wait until the initialization is done
@@ -475,7 +475,7 @@ static void LWA_API AlsaThread(void* Arg)
 	return;
 }
 
-static UINT8 WriteBuffer(DRV_ALSA* drv, UINT32 dataSize, void* data)
+static uint8_t WriteBuffer(DRV_ALSA* drv, uint32_t dataSize, void* data)
 {
 	int retVal;
 	

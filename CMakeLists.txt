@@ -130,9 +130,11 @@ if(BUILD_EXAMPLES)
 endif(BUILD_EXAMPLES)
 
 set(COMMON_HEADERS
-	liblwa/common_def.h
+	liblwa/lwa_types.h
 	liblwa/lwa_api.h
-	liblwa/stdtype.h
+)
+set(COMMON_PRIVATE_HEADERS
+	liblwa/lwa_inline.h
 )
 
 install(FILES ${COMMON_HEADERS} DESTINATION "${LIBLWA_INSTALL_INCLUDE_SUBDIR}")
