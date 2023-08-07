@@ -15,13 +15,9 @@ extern "C"
 #include "lwau_export.h"
 #include "../lwa_api.h"
 
-/**
- * liblwa utility thread object
- */
+/** @brief liblwa utility thread object */
 typedef struct _lwau_thread LWAU_THREAD;
-/**
- * function signature of the function to be run by the thread
- */
+/** @brief function signature of the function to be run by the thread */
 typedef void (LWA_API *LWAU_THR_FUNC)(void* args);
 
 /**

@@ -15,9 +15,7 @@ extern "C"
 #include "lwau_export.h"
 #include "../lwa_api.h"
 
-/**
- * liblwa utility mutex object
- */
+/** @brief liblwa utility mutex object */
 typedef struct _lwau_mutex LWAU_MUTEX;
 
 /**

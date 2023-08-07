@@ -15,9 +15,7 @@ extern "C"
 #include "lwau_export.h"
 #include "../lwa_api.h"
 
-/**
- * liblwa utility signal object
- */
+/** @brief liblwa utility signal object */
 typedef struct _lwau_signal LWAU_SIGNAL;
 
 /**
