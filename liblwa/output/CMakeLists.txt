@@ -14,6 +14,7 @@ endif()
 set(LWAO_EXPORT_HDR "${PROJECT_BINARY_DIR}/lwao_export.h")
 set(LWAO_HEADERS
 	lwao_structs.h
+	lwao_errors.h
 	lwao.h
 	lwao_drvfuncs.h
 	${LWAO_EXPORT_HDR}

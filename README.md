@@ -150,3 +150,6 @@ Most of the split is related to naming, so migrating from libvgm to liblwa can b
 		-e 's,AudioStream_SpcDrvFuns.h,lwao_drvfuncs.h,g' \
 		<files>
 	```
+
+One feature was removed: automatic forwarding of sample data between multiple audio drivers.
+This feature can be easily implemented application-side and the removal reduces complexity in the library.

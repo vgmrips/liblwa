@@ -29,7 +29,7 @@ uint8_t LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFun
 	
 	thr = (LWAU_THREAD*)calloc(1, sizeof(LWAU_THREAD));
 	if (thr == NULL)
-		return 0xFF;
+		return LWAU_ERR_MEM_ERR;
 	
 	thr->func = threadFunc;
 	thr->args = args;
@@ -38,11 +38,11 @@ uint8_t LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFun
 	if (retVal)
 	{
 		free(thr);
-		return 0x80;
+		return LWAU_ERR_API_ERR;
 	}
 	
 	*retThread = thr;
-	return 0x00;
+	return LWAU_ERR_OK;
 }
 
 static void* lwauThread_Main(void* param)

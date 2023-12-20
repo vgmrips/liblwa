@@ -224,7 +224,7 @@ uint8_t lwaodPulse_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, vo
 	uint8_t retVal8;
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	
 	drv->audDrvPtr = audDrvParam;
 	if (options == NULL)
@@ -246,20 +246,20 @@ uint8_t lwaodPulse_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, vo
 	else if (options->numBitsPerSmpl == 32)
 		drv->pulseFmt.format = PA_SAMPLE_S32NE;
 	else
-		return 0xCF;
+		return LWAO_ERR_BAD_FORMAT;
 	
 	drv->canPause = 1;
 	
 	drv->hPulse = pa_simple_new(NULL, "libvgm", PA_STREAM_PLAYBACK, NULL, drv->streamDesc, &drv->pulseFmt, NULL, NULL, NULL);
 	if(!drv->hPulse)
-		return 0xC0;
+		return LWAO_ERR_DEV_OPEN_FAIL;
 	
 	lwauSignal_Reset(drv->hSignal);
 	retVal8 = lwauThread_Init(&drv->hThread, &PulseThread, drv);
 	if (retVal8)
 	{
 		pa_simple_free(drv->hPulse);
-		return 0xC8;	// CreateThread failed
+		return LWAO_ERR_THREAD_FAIL;
 	}
 	
 	drv->bufSpace = (uint8_t*)malloc(drv->bufSize);
@@ -276,7 +276,7 @@ uint8_t lwaodPulse_Stop(void* drvObj)
 	DRV_PULSE* drv = (DRV_PULSE*)drvObj;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	
@@ -350,7 +350,7 @@ uint8_t lwaodPulse_WriteData(void* drvObj, uint32_t dataSize, void* data)
 	
 	retVal = pa_simple_write(drv->hPulse, data, (size_t) dataSize, NULL);
 	if (retVal > 0)
-		return 0xFF;
+		return LWAO_ERR_WRITE_ERROR;
 	
 	return LWAO_ERR_OK;
 }

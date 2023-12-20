@@ -227,7 +227,7 @@ uint8_t lwaodALSA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, voi
 	int rateDir = 0;
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	
 	drv->audDrvPtr = audDrvParam;
 	if (options == NULL)
@@ -253,11 +253,11 @@ uint8_t lwaodALSA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, voi
 	else if (drv->waveFmt.wBitsPerSample == 32)
 		sndPcmFmt = SND_PCM_FORMAT_S32;
 	else
-		return 0xCF;
+		return LWAO_ERR_BAD_FORMAT;
 	
 	retVal = snd_pcm_open(&drv->hPCM, alsaDevNames[0], SND_PCM_STREAM_PLAYBACK, 0x00);
 	if (retVal < 0)
-		return 0xC0;		// snd_pcm_open() failed
+		return LWAO_ERR_DEV_OPEN_FAIL;
 	
 	snd_pcm_hw_params_alloca(&sndParams);
 	snd_pcm_hw_params_any(drv->hPCM, sndParams);
@@ -294,7 +294,7 @@ uint8_t lwaodALSA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, voi
 	if (retVal < 0)
 	{
 		snd_pcm_close(drv->hPCM);	drv->hPCM = NULL;
-		return 0xCF;
+		return LWAO_ERR_BAD_FORMAT;
 	}
 	
 	lwauSignal_Reset(drv->hSignal);
@@ -302,7 +302,7 @@ uint8_t lwaodALSA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, voi
 	if (retVal8)
 	{
 		snd_pcm_close(drv->hPCM);	drv->hPCM = NULL;
-		return 0xC8;	// CreateThread failed
+		return LWAO_ERR_THREAD_FAIL;
 	}
 	
 	drv->bufSize = drv->waveFmt.nBlockAlign * drv->bufSmpls;
@@ -321,7 +321,7 @@ uint8_t lwaodALSA_Stop(void* drvObj)
 	int retVal;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	
@@ -336,7 +336,7 @@ uint8_t lwaodALSA_Stop(void* drvObj)
 	
 	retVal = snd_pcm_close(drv->hPCM);
 	if (retVal < 0)
-		return 0xC4;		// close failed -- but why ???
+		return LWAO_ERR_DEV_CLOSE_FAIL;	// close failed -- but why ???
 	drv->hPCM = NULL;
 	
 	drv->devState = 0;
@@ -350,7 +350,7 @@ uint8_t lwaodALSA_Pause(void* drvObj)
 	int retVal;
 	
 	if (drv->hPCM == NULL)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	if (drv->canPause)
 	{
@@ -368,7 +368,7 @@ uint8_t lwaodALSA_Resume(void* drvObj)
 	int retVal;
 	
 	if (drv->hPCM == NULL)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	if (drv->canPause)
 	{

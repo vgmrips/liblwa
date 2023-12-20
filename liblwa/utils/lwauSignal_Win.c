@@ -21,17 +21,17 @@ uint8_t LWA_API lwauSignal_Init(LWAU_SIGNAL** retSignal, uint8_t initState)
 	
 	sig = (LWAU_SIGNAL*)calloc(1, sizeof(LWAU_SIGNAL));
 	if (sig == NULL)
-		return 0xFF;
+		return LWAU_ERR_MEM_ERR;
 	
 	sig->hEvent = CreateEvent(NULL, FALSE, initState ? TRUE : FALSE, NULL);
 	if (sig->hEvent == NULL)
 	{
 		free(sig);
-		return 0x80;
+		return LWAU_ERR_API_ERR;
 	}
 	
 	*retSignal = sig;
-	return 0x00;
+	return LWAU_ERR_OK;
 }
 
 void LWA_API lwauSignal_Deinit(LWAU_SIGNAL* sig)
@@ -44,27 +44,21 @@ void LWA_API lwauSignal_Deinit(LWAU_SIGNAL* sig)
 
 uint8_t LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
 {
-	BOOL retVal;
-	
-	retVal = SetEvent(sig->hEvent);
-	return retVal ? 0x00 : 0xFF;
+	BOOL retVal = SetEvent(sig->hEvent);
+	return retVal ? LWAU_ERR_OK : LWAU_ERR_API_ERR;
 }
 
 uint8_t LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
 {
-	BOOL retVal;
-	
-	retVal = ResetEvent(sig->hEvent);
-	return retVal ? 0x00 : 0xFF;
+	BOOL retVal = ResetEvent(sig->hEvent);
+	return retVal ? LWAU_ERR_OK : LWAU_ERR_API_ERR;
 }
 
 uint8_t LWA_API lwauSignal_Wait(LWAU_SIGNAL* sig)
 {
-	DWORD retVal;
-	
-	retVal = WaitForSingleObject(sig->hEvent, INFINITE);
+	DWORD retVal = WaitForSingleObject(sig->hEvent, INFINITE);
 	if (retVal == WAIT_OBJECT_0)
-		return 0x00;
+		return LWAU_ERR_OK;
 	else
-		return 0xFF;
+		return LWAU_ERR_API_ERR;
 }

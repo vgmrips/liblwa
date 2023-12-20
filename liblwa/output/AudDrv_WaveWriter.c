@@ -203,7 +203,7 @@ uint8_t lwaodWavWrt_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 	uint32_t DataLen;
 	
 	if (drv->devState != 0)
-		return LWAO_ERR_WASDONE;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	if (drv->fileName == NULL)
 		return LWAO_ERR_CALL_SPC_FUNC;
 	
@@ -220,7 +220,7 @@ uint8_t lwaodWavWrt_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 	
 	drv->hFile = fopen(drv->fileName, "wb");
 	if (drv->hFile == NULL)
-		return LWAO_ERR_FILE_ERR;
+		return LWAO_ERR_DEV_OPEN_FAIL;
 	
 	drv->hdrSize = 0x00;
 	fputBE32(0x52494646, drv->hFile);	// 'RIFF'
@@ -261,7 +261,7 @@ uint8_t lwaodWavWrt_Stop(void* drvObj)
 	uint32_t riffLen;
 	
 	if (drv->devState != 1)
-		return LWAO_ERR_NOT_OPEN;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	
@@ -305,11 +305,11 @@ uint8_t lwaodWavWrt_WriteData(void* drvObj, uint32_t dataSize, void* data)
 	uint32_t wrtBytes;
 	
 	if (drv->hFile == NULL)
-		return LWAO_ERR_NOT_OPEN;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	wrtBytes = (uint32_t)fwrite(data, 0x01, dataSize, drv->hFile);
 	if (! wrtBytes)
-		return LWAO_ERR_FILE_ERR;
+		return LWAO_ERR_WRITE_ERROR;
 	drv->wrtDataBytes += wrtBytes;
 	
 	return LWAO_ERR_OK;

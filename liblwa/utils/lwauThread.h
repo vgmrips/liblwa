@@ -11,9 +11,10 @@ extern "C"
 {
 #endif
 
-#include "../lwa_types.h"
 #include "lwau_export.h"
 #include "../lwa_api.h"
+#include "../lwa_types.h"
+#include "lwau_errors.h"
 
 /** @brief liblwa utility thread object */
 typedef struct _lwau_thread LWAU_THREAD;
@@ -26,7 +27,7 @@ typedef void (LWA_API *LWAU_THR_FUNC)(void* args);
  * @param retThread address of the thread object pointer to be stored in
  * @param threadFunc function that the thread executes
  * @param args parameter pointer passes to the thread function
- * @return error code. 0 = success, other values = error
+ * @return error code. 0 = success, see LWAU_ERR constants
  */
 LWAU_EXPORT uint8_t LWA_API lwauThread_Init(LWAU_THREAD** retThread, LWAU_THR_FUNC threadFunc, void* args);
 /**

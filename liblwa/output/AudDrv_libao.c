@@ -222,7 +222,7 @@ uint8_t lwaodLibAO_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, vo
 	uint8_t retVal8;
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	
 	drv->audDrvPtr = audDrvParam;
 	if (options == NULL)
@@ -247,7 +247,7 @@ uint8_t lwaodLibAO_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, vo
 	
 	drv->hDevAO = ao_open_live(ao_default_driver_id(), &drv->aoParams, NULL);
 	if (drv->hDevAO == NULL)
-		return 0xC0;		// open() failed
+		return LWAO_ERR_DEV_OPEN_FAIL;
 	
 	lwauSignal_Reset(drv->hSignal);
 	retVal8 = lwauThread_Init(&drv->hThread, &AoThread, drv);
@@ -255,7 +255,7 @@ uint8_t lwaodLibAO_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, vo
 	{
 		retVal = ao_close(drv->hDevAO);
 		drv->hDevAO = NULL;
-		return 0xC8;	// CreateThread failed
+		return LWAO_ERR_THREAD_FAIL;
 	}
 	
 	drv->bufSpace = (uint8_t*)malloc(drv->bufSize);
@@ -273,7 +273,7 @@ uint8_t lwaodLibAO_Stop(void* drvObj)
 	int retVal;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	
@@ -284,7 +284,7 @@ uint8_t lwaodLibAO_Stop(void* drvObj)
 	
 	retVal = ao_close(drv->hDevAO);
 	if (! retVal)
-		return 0xC4;		// close failed -- but why ???
+		return LWAO_ERR_DEV_CLOSE_FAIL;	// close failed -- but why ???
 	drv->hDevAO = NULL;
 	drv->devState = 0;
 	
@@ -296,7 +296,7 @@ uint8_t lwaodLibAO_Pause(void* drvObj)
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	
 	if (drv->hDevAO == NULL)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->pauseThread |= 0x01;
 	return LWAO_ERR_OK;
@@ -307,7 +307,7 @@ uint8_t lwaodLibAO_Resume(void* drvObj)
 	DRV_AO* drv = (DRV_AO*)drvObj;
 	
 	if (drv->hDevAO == NULL)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->pauseThread &= ~0x01;
 	return LWAO_ERR_OK;
@@ -356,7 +356,7 @@ uint8_t lwaodLibAO_WriteData(void* drvObj, uint32_t dataSize, void* data)
 	
 	retVal = ao_play(drv->hDevAO, data, dataSize);
 	if (! retVal)
-		return 0xFF;
+		return LWAO_ERR_WRITE_ERROR;
 	return LWAO_ERR_OK;
 }
 

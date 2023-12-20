@@ -11,37 +11,11 @@ extern "C"
 {
 #endif
 
-// Audio Drivers
-/*
-#define LWAO_DRIVER_WAVEWRITE
-
-#ifdef _WIN32
-
-#define LWAO_DRIVER_WINMM
-#define LWAO_DRIVER_DSOUND
-#define LWAO_DRIVER_XAUD2
-#if defined(_MSC_VER) && (_MSC_VER >= 1400)
-#define LWAO_DRIVER_WASAPI	// no WASAPI for MS VC6 or MinGW
-#endif
-
-#elif defined(APPLE)
-
-#define LWAO_DRIVER_CA
-
-#else
-
-#define LWAO_DRIVER_OSS
-//#define LWAO_DRIVER_SADA
-#define LWAO_DRIVER_ALSA
-#define LWAO_DRIVER_LIBAO
-#define LWAO_DRIVER_PULSE
-
-#endif
-*/
-
-#include "lwao_structs.h"
 #include "lwao_export.h"
 #include "../lwa_api.h"
+#include "../lwa_types.h"
+#include "lwao_structs.h"
+#include "lwao_errors.h"
 
 /**
  * @brief Initializes the audio output system and loads audio drivers.

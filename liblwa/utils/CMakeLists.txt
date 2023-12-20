@@ -27,6 +27,7 @@ find_package(Threads REQUIRED)
 set(UTIL_DEPS ${UTIL_DEPS} "Threads")
 
 set(UTIL_HEADERS ${UTIL_HEADERS}
+	lwau_errors.h
 	lwauMutex.h
 	lwauSignal.h
 	lwauThread.h

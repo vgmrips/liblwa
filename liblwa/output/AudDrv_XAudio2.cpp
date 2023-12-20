@@ -271,7 +271,7 @@ uint8_t lwaodXAudio2_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, 
 #endif
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	if (deviceID >= deviceList.devCount)
 		return LWAO_ERR_INVALID_DEV;
 	
@@ -303,15 +303,17 @@ uint8_t lwaodXAudio2_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, 
 				XAUDIO2_DEFAULT_CHANNELS, drv->waveFmt.nSamplesPerSec, 0x00,
 				devListIDs[deviceID], NULL);
 	if (retVal != S_OK)
-		return LWAO_ERR_API_ERR;
+		return LWAO_ERR_DEV_OPEN_FAIL;
 	
 	retVal = drv->xAudIntf->CreateSourceVoice(&drv->xaSrcVoice,
 				&drv->waveFmt, 0x00, XAUDIO2_DEFAULT_FREQ_RATIO, NULL, NULL, NULL);
+	if (retVal != S_OK)
+		return LWAO_ERR_BAD_FORMAT;
 	
 	lwauSignal_Reset(drv->hSignal);
 	retVal8 = lwauThread_Init(&drv->hThread, &XAudio2Thread, drv);
 	if (retVal8)
-		return 0xC8;	// CreateThread failed
+		return LWAO_ERR_THREAD_FAIL;
 #ifdef NDEBUG
 	hWinThr = *(HANDLE*)lwauThread_GetHandle(drv->hThread);
 	retValB = SetThreadPriority(hWinThr, THREAD_PRIORITY_TIME_CRITICAL);
@@ -349,7 +351,7 @@ uint8_t lwaodXAudio2_Stop(void* drvObj)
 	HRESULT retVal;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	if (drv->xaSrcVoice != NULL)
@@ -377,10 +379,14 @@ uint8_t lwaodXAudio2_Pause(void* drvObj)
 	HRESULT retVal;
 	
 	if (drv->devState != 1)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	retVal = drv->xaSrcVoice->Stop(0x00, XAUDIO2_COMMIT_NOW);
 	return (retVal == S_OK) ? LWAO_ERR_OK : 0xFF;
+	if (retVal != S_OK)
+		return LWAO_ERR_API_ERR;
+	
+	return LWAO_ERR_OK;
 }
 
 uint8_t lwaodXAudio2_Resume(void* drvObj)
@@ -389,10 +395,13 @@ uint8_t lwaodXAudio2_Resume(void* drvObj)
 	HRESULT retVal;
 	
 	if (drv->devState != 1)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	retVal = drv->xaSrcVoice->Start(0x00, XAUDIO2_COMMIT_NOW);
-	return (retVal == S_OK) ? LWAO_ERR_OK : 0xFF;
+	if (retVal != S_OK)
+		return LWAO_ERR_API_ERR;
+	
+	return LWAO_ERR_OK;
 }
 
 

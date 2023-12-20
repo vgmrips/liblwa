@@ -196,7 +196,7 @@ uint8_t lwaodCoreAudio_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options
 	uint32_t i;
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	
 	drv->audDrvPtr = audDrvParam;
 	if (options == NULL)
@@ -227,7 +227,7 @@ uint8_t lwaodCoreAudio_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options
 		if (res || drv->buffers[i] == NULL) {
 			res = AudioQueueDispose(drv->audioQueue, true);
 			drv->audioQueue = NULL;
-			return 0xC0;	// open() failed
+			return LWAO_ERR_DEV_OPEN_FAIL;
 		}
 		drv->buffers[i]->mAudioDataByteSize = drv->bufSize;
 		// Prime the buffer allocated
@@ -253,13 +253,13 @@ uint8_t lwaodCoreAudio_Stop(void* drvObj)
 	OSStatus res;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	free(drv->buffers);	drv->buffers = NULL;
 	
 	res = AudioQueueDispose(drv->audioQueue, true);
 	if (res)
-		return 0xC4;		// close failed -- but why ???
+		return LWAO_ERR_DEV_CLOSE_FAIL;	// close failed -- but why ???
 	drv->audioQueue = NULL;
 	drv->devState = 0;
 	
@@ -272,11 +272,11 @@ uint8_t lwaodCoreAudio_Pause(void* drvObj)
 	OSStatus res;
 	
 	if (drv->audioQueue == NULL)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 
 	res = AudioQueuePause(drv->audioQueue);
 	if (res)
-		return 0xFF;
+		return LWAO_ERR_API_ERR;
 	
 	return LWAO_ERR_OK;
 }
@@ -287,11 +287,11 @@ uint8_t lwaodCoreAudio_Resume(void* drvObj)
 	OSStatus res;
 	
 	if (drv->audioQueue == NULL)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 
 	res = AudioQueueStart(drv->audioQueue, NULL);
 	if (res)
-		return 0xFF;
+		return LWAO_ERR_API_ERR;
 	
 	return LWAO_ERR_OK;
 }
@@ -347,7 +347,7 @@ uint8_t lwaodCoreAudio_WriteData(void* drvObj, uint32_t dataSize, void* data)
 
 	res = AudioQueueEnqueueBuffer(drv->audioQueue, drv->buffers[bufNum], 0, NULL);	
 	if (res)
-		return 0xFF;
+		return LWAO_ERR_WRITE_ERROR;
 	return LWAO_ERR_OK;
 }
 

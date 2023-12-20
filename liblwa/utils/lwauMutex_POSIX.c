@@ -23,19 +23,19 @@ uint8_t LWA_API lwauMutex_Init(LWAU_MUTEX** retMutex, uint8_t initLocked)
 	
 	mtx = (LWAU_MUTEX*)calloc(1, sizeof(LWAU_MUTEX));
 	if (mtx == NULL)
-		return 0xFF;
+		return LWAU_ERR_MEM_ERR;
 	
 	retVal = pthread_mutex_init(&mtx->hMutex, NULL);
 	if (retVal)
 	{
 		free(mtx);
-		return 0x80;
+		return LWAU_ERR_API_ERR;
 	}
 	if (initLocked)
 		lwauMutex_Lock(mtx);
 	
 	*retMutex = mtx;
-	return 0x00;
+	return LWAU_ERR_OK;
 }
 
 void LWA_API lwauMutex_Deinit(LWAU_MUTEX* mtx)
@@ -48,32 +48,29 @@ void LWA_API lwauMutex_Deinit(LWAU_MUTEX* mtx)
 
 uint8_t LWA_API lwauMutex_Lock(LWAU_MUTEX* mtx)
 {
-	int retVal;
-	
-	retVal = pthread_mutex_lock(&mtx->hMutex);
+	int retVal = pthread_mutex_lock(&mtx->hMutex);
 	if (! retVal)
-		return 0x00;
+		return LWAU_ERR_OK;
 	else
-		return 0xFF;
+		return LWAU_ERR_API_ERR;
 }
 
 uint8_t LWA_API lwauMutex_TryLock(LWAU_MUTEX* mtx)
 {
-	int retVal;
-	
-	retVal = pthread_mutex_trylock(&mtx->hMutex);
+	int retVal = pthread_mutex_trylock(&mtx->hMutex);
 	if (! retVal)
-		return 0x00;
+		return LWAU_ERR_OK;
 	else if (retVal == EBUSY)
-		return 0x01;
+		return LWAU_ERR_MTX_LOCKED;
 	else
-		return 0xFF;
+		return LWAU_ERR_API_ERR;
 }
 
 uint8_t LWA_API lwauMutex_Unlock(LWAU_MUTEX* mtx)
 {
-	int retVal;
-	
-	retVal = pthread_mutex_unlock(&mtx->hMutex);
-	return retVal ? 0xFF : 0x00;
+	int retVal = pthread_mutex_unlock(&mtx->hMutex);
+	if (! retVal)
+		return LWAU_ERR_OK;
+	else
+		return LWAU_ERR_API_ERR;
 }

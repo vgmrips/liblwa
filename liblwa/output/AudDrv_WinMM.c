@@ -265,7 +265,7 @@ uint8_t lwaodWinMM_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, vo
 #endif
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	if (deviceID >= deviceList.devCount)
 		return LWAO_ERR_INVALID_DEV;
 	
@@ -288,7 +288,7 @@ uint8_t lwaodWinMM_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, vo
 	woDevID = devListIDs[deviceID];
 	retValMM = waveOutOpen(&drv->hWaveOut, woDevID, &drv->waveFmt, 0x00, 0x00, CALLBACK_NULL);
 	if (retValMM != MMSYSERR_NOERROR)
-		return 0xC0;		// waveOutOpen failed
+		return LWAO_ERR_DEV_OPEN_FAIL;
 	
 	lwauSignal_Reset(drv->hSignal);
 	retVal8 = lwauThread_Init(&drv->hThread, &WaveOutThread, drv);
@@ -296,7 +296,7 @@ uint8_t lwaodWinMM_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, vo
 	{
 		retValMM = waveOutClose(drv->hWaveOut);
 		drv->hWaveOut = NULL;
-		return 0xC8;	// CreateThread failed
+		return LWAO_ERR_THREAD_FAIL;
 	}
 #ifdef NDEBUG
 	hWinThr = *(HANDLE*)lwauThread_GetHandle(drv->hThread);
@@ -341,7 +341,7 @@ uint8_t lwaodWinMM_Stop(void* drvObj)
 	MMRESULT retValMM;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	
@@ -356,7 +356,7 @@ uint8_t lwaodWinMM_Stop(void* drvObj)
 	
 	retValMM = waveOutClose(drv->hWaveOut);
 	if (retValMM != MMSYSERR_NOERROR)
-		return 0xC4;		// waveOutClose failed -- but why ???
+		return LWAO_ERR_DEV_CLOSE_FAIL;	// close failed -- but why ???
 	drv->hWaveOut = NULL;
 	drv->devState = 0;
 	
@@ -369,10 +369,13 @@ uint8_t lwaodWinMM_Pause(void* drvObj)
 	MMRESULT retValMM;
 	
 	if (drv->hWaveOut == NULL)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	retValMM = waveOutPause(drv->hWaveOut);
-	return (retValMM == MMSYSERR_NOERROR) ? LWAO_ERR_OK : 0xFF;
+	if (retValMM != MMSYSERR_NOERROR)
+		return LWAO_ERR_API_ERR;
+	
+	return LWAO_ERR_OK;
 }
 
 uint8_t lwaodWinMM_Resume(void* drvObj)
@@ -381,10 +384,13 @@ uint8_t lwaodWinMM_Resume(void* drvObj)
 	MMRESULT retValMM;
 	
 	if (drv->hWaveOut == NULL)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	retValMM = waveOutRestart(drv->hWaveOut);
-	return (retValMM == MMSYSERR_NOERROR) ? LWAO_ERR_OK : 0xFF;
+	if (retValMM != MMSYSERR_NOERROR)
+		return LWAO_ERR_API_ERR;
+	
+	return LWAO_ERR_OK;
 }
 
 

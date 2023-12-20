@@ -25,25 +25,25 @@ uint8_t LWA_API lwauSignal_Init(LWAU_SIGNAL** retSignal, uint8_t initState)
 	
 	sig = (LWAU_SIGNAL*)calloc(1, sizeof(LWAU_SIGNAL));
 	if (sig == NULL)
-		return 0xFF;
+		return LWAU_ERR_MEM_ERR;
 	
 	retVal = pthread_mutex_init(&sig->hMutex, NULL);
 	if (retVal)
 	{
 		free(sig);
-		return 0x80;
+		return LWAU_ERR_API_ERR;
 	}
 	retVal = pthread_cond_init(&sig->hCond, NULL);
 	if (retVal)
 	{
 		pthread_mutex_destroy(&sig->hMutex);
 		free(sig);
-		return 0x80;
+		return LWAU_ERR_API_ERR;
 	}
 	sig->state = initState;
 	
 	*retSignal = sig;
-	return 0x00;
+	return LWAU_ERR_OK;
 }
 
 void LWA_API lwauSignal_Deinit(LWAU_SIGNAL* sig)
@@ -58,45 +58,39 @@ void LWA_API lwauSignal_Deinit(LWAU_SIGNAL* sig)
 
 uint8_t LWA_API lwauSignal_Signal(LWAU_SIGNAL* sig)
 {
-	int retVal;
-	
-	retVal = pthread_mutex_lock(&sig->hMutex);
+	int retVal = pthread_mutex_lock(&sig->hMutex);
 	if (retVal)
-		return 0xFF;
+		return LWAU_ERR_API_ERR;
 	
 	sig->state = 1;
 	pthread_cond_signal(&sig->hCond);
 	
 	retVal = pthread_mutex_unlock(&sig->hMutex);
-	return retVal ? 0xFF : 0x00;
+	return retVal ? LWAU_ERR_API_ERR : LWAU_ERR_OK;
 }
 
 uint8_t LWA_API lwauSignal_Reset(LWAU_SIGNAL* sig)
 {
-	int retVal;
-	
-	retVal = pthread_mutex_lock(&sig->hMutex);
+	int retVal = pthread_mutex_lock(&sig->hMutex);
 	if (retVal)
-		return 0xFF;
+		return LWAU_ERR_API_ERR;
 	
 	sig->state = 0;
 	pthread_mutex_unlock(&sig->hMutex);
 	
-	return 0x00;
+	return LWAU_ERR_OK;
 }
 
 uint8_t LWA_API lwauSignal_Wait(LWAU_SIGNAL* sig)
 {
-	int retVal;
-	
-	retVal = pthread_mutex_lock(&sig->hMutex);
+	int retVal = pthread_mutex_lock(&sig->hMutex);
 	if (retVal)
-		return 0xFF;
+		return LWAU_ERR_API_ERR;
 	
 	while(! sig->state && ! retVal)
 		retVal = pthread_cond_wait(&sig->hCond, &sig->hMutex);
 	sig->state = 0;	// reset signal after catching it successfully
 	
 	pthread_mutex_unlock(&sig->hMutex);
-	return retVal ? 0xFF : 0x00;
+	return retVal ? LWAU_ERR_API_ERR : LWAU_ERR_OK;
 }

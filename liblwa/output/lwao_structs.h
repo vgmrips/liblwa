@@ -132,28 +132,6 @@ typedef struct _lwao_driver
 /**@}*/
 
 
-/**
- * @name lwao device error codes
- */
-/**@{*/
-#define LWAO_ERR_OK				0x00	/**< @brief call completed successfully */
-#define LWAO_ERR_BUSY			0x01	/**< @brief The device is busy and does not (yet) accept more data. */
-#define LWAO_ERR_TOO_MUCH_DATA	0x02	/**< @brief The data to be written is larger than buffer size. */
-#define LWAO_ERR_WASDONE		0x18	/**< @brief Init()/Deinit() was already called with success. */
-#define LWAO_ERR_NODRVS			0x20	/**< @brief No audio drivers were found. */
-#define LWAO_ERR_INVALID_DRV	0x21	/**< @brief invalid audio driver ID */
-#define LWAO_ERR_DRV_DISABLED	0x22	/**< @brief The audio driver was disabled, because it is not available. */
-#define LWAO_ERR_INVALID_DEV	0x41	/**< @brief Start() was called with invalid device ID. */
-#define LWAO_ERR_NO_SUPPORT		0x80	/**< @brief The function call is not supported by this driver. */
-#define LWAO_ERR_BAD_MODE		0x81	/**< @brief The audio driver is in the wrong mode for this call. */
-
-#define LWAO_ERR_FILE_ERR		0xC0	/**< @brief [file writer] file write error */
-#define LWAO_ERR_NOT_OPEN		0xC1	/**< @brief [file writer] file is not open */
-
-#define LWAO_ERR_API_ERR		0xF0	/**< @brief some API call inside the driver failed */
-#define LWAO_ERR_CALL_SPC_FUNC	0xF1	/**< @brief A driver-specific function has to be called first. @see lwao_drvfuncs.h */
-/**@}*/
-
 #ifdef __cplusplus
 }
 #endif

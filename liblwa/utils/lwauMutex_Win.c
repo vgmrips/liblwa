@@ -21,17 +21,17 @@ uint8_t LWA_API lwauMutex_Init(LWAU_MUTEX** retMutex, uint8_t initLocked)
 	
 	mtx = (LWAU_MUTEX*)calloc(1, sizeof(LWAU_MUTEX));
 	if (mtx == NULL)
-		return 0xFF;
+		return LWAU_ERR_MEM_ERR;
 	
 	mtx->hMutex = CreateMutex(NULL, initLocked ? TRUE : FALSE, NULL);
 	if (mtx->hMutex == NULL)
 	{
 		free(mtx);
-		return 0x80;
+		return LWAU_ERR_API_ERR;
 	}
 	
 	*retMutex = mtx;
-	return 0x00;
+	return LWAU_ERR_OK;
 }
 
 void LWA_API lwauMutex_Deinit(LWAU_MUTEX* mtx)
@@ -44,32 +44,29 @@ void LWA_API lwauMutex_Deinit(LWAU_MUTEX* mtx)
 
 uint8_t LWA_API lwauMutex_Lock(LWAU_MUTEX* mtx)
 {
-	DWORD retVal;
-	
-	retVal = WaitForSingleObject(mtx->hMutex, INFINITE);
+	DWORD retVal = WaitForSingleObject(mtx->hMutex, INFINITE);
 	if (retVal == WAIT_OBJECT_0)
-		return 0x00;
+		return LWAU_ERR_OK;
 	else
-		return 0xFF;
+		return LWAU_ERR_API_ERR;
 }
 
 uint8_t LWA_API lwauMutex_TryLock(LWAU_MUTEX* mtx)
 {
-	DWORD retVal;
-	
-	retVal = WaitForSingleObject(mtx->hMutex, 0);
+	DWORD retVal = WaitForSingleObject(mtx->hMutex, 0);
 	if (retVal == WAIT_OBJECT_0)
-		return 0x00;
+		return LWAU_ERR_OK;
 	else if (retVal == WAIT_TIMEOUT)
-		return 0x01;
+		return LWAU_ERR_MTX_LOCKED;
 	else
-		return 0xFF;
+		return LWAU_ERR_API_ERR;
 }
 
 uint8_t LWA_API lwauMutex_Unlock(LWAU_MUTEX* mtx)
 {
-	BOOL retVal;
-	
-	retVal = ReleaseMutex(mtx->hMutex);
-	return retVal ? 0x00 : 0xFF;
+	BOOL retVal = ReleaseMutex(mtx->hMutex);
+	if (retVal)
+		return LWAU_ERR_OK;
+	else
+		return LWAU_ERR_API_ERR;
 }

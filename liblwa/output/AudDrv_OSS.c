@@ -260,7 +260,7 @@ uint8_t lwaodOSS_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void
 #endif
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	
 	drv->audDrvPtr = audDrvParam;
 	if (options == NULL)
@@ -299,7 +299,7 @@ uint8_t lwaodOSS_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void
 		drv->ossParams.format = AFMT_S32_NE;
 #endif
 	else
-		return 0xCF;	// invalid sample format
+		return LWAO_ERR_BAD_FORMAT;
 	drv->ossParams.channels = drv->waveFmt.nChannels;
 	drv->ossParams.smplrate = drv->waveFmt.nSamplesPerSec;
 	
@@ -307,7 +307,7 @@ uint8_t lwaodOSS_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void
 	if (drv->hFileDSP < 0)
 	{
 		drv->hFileDSP = 0;
-		return 0xC0;		// open() failed
+		return LWAO_ERR_DEV_OPEN_FAIL;
 	}
 	
 	retVal = ioctl(drv->hFileDSP, SNDCTL_DSP_SETFRAGMENT, &drv->ossParams.fragment);
@@ -330,7 +330,7 @@ uint8_t lwaodOSS_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, void
 	{
 		retVal = close(drv->hFileDSP);
 		drv->hFileDSP = 0;
-		return 0xC8;	// CreateThread failed
+		return LWAO_ERR_THREAD_FAIL;
 	}
 #endif
 	
@@ -349,7 +349,7 @@ uint8_t lwaodOSS_Stop(void* drvObj)
 	int retVal;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	
@@ -362,7 +362,7 @@ uint8_t lwaodOSS_Stop(void* drvObj)
 	
 	retVal = close(drv->hFileDSP);
 	if (retVal)
-		return 0xC4;		// close failed -- but why ???
+		return LWAO_ERR_DEV_CLOSE_FAIL;	// close failed -- but why ???
 	drv->hFileDSP = 0;
 	drv->devState = 0;
 	
@@ -374,7 +374,7 @@ uint8_t lwaodOSS_Pause(void* drvObj)
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
 	if (! drv->hFileDSP)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->pauseThread |= 0x01;
 	return LWAO_ERR_OK;
@@ -385,7 +385,7 @@ uint8_t lwaodOSS_Resume(void* drvObj)
 	DRV_OSS* drv = (DRV_OSS*)drvObj;
 	
 	if (! drv->hFileDSP)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->pauseThread &= ~0x01;
 	return LWAO_ERR_OK;
@@ -438,7 +438,7 @@ uint8_t lwaodOSS_WriteData(void* drvObj, uint32_t dataSize, void* data)
 	
 	wrtBytes = write(drv->hFileDSP, data, dataSize);
 	if (wrtBytes == -1)
-		return 0xFF;
+		return LWAO_ERR_WRITE_ERROR;
 	return LWAO_ERR_OK;
 }
 

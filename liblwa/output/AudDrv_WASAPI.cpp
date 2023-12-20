@@ -15,7 +15,7 @@
 
 #ifdef _MSC_VER
 #define strdup	_strdup
-#define	wcsdup	_wcsdup
+#define wcsdup	_wcsdup
 #endif
 
 #include "../lwa_types.h"
@@ -361,7 +361,7 @@ uint8_t lwaodWASAPI_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 #endif
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	if (deviceID >= deviceList.devCount)
 		return LWAO_ERR_INVALID_DEV;
 	
@@ -393,7 +393,7 @@ uint8_t lwaodWASAPI_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 	if (retVal != S_OK)
 		return LWAO_ERR_API_ERR;
 	
-	errVal = LWAO_ERR_API_ERR;
+	errVal = LWAO_ERR_DEV_OPEN_FAIL;
 	if (devListIDs[deviceID] == NULL)
 		retVal = drv->devEnum->GetDefaultAudioEndpoint(eRender, eConsole, &drv->audDev);
 	else
@@ -405,10 +405,12 @@ uint8_t lwaodWASAPI_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 	if (retVal != S_OK)
 		goto StartErr_HasDev;
 	
+	errVal = LWAO_ERR_BAD_FORMAT;
 	retVal = drv->audClnt->Initialize(AUDCLNT_SHAREMODE_SHARED, 0, bufTime, 0, &drv->waveFmt, NULL);
 	if (retVal != S_OK)
 		goto StartErr_HasAudClient;
 	
+	errVal = LWAO_ERR_API_ERR;
 	retVal = drv->audClnt->GetBufferSize(&drv->bufFrmCount);
 	if (retVal != S_OK)
 		goto StartErr_HasAudClient;
@@ -421,7 +423,7 @@ uint8_t lwaodWASAPI_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 	retVal8 = lwauThread_Init(&drv->hThread, &WasapiThread, drv);
 	if (retVal8)
 	{
-		errVal = 0xC8;	// CreateThread failed
+		errVal = LWAO_ERR_THREAD_FAIL;
 		goto StartErr_HasRendClient;
 	}
 #ifdef NDEBUG
@@ -460,7 +462,7 @@ uint8_t lwaodWASAPI_Stop(void* drvObj)
 	HRESULT retVal;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	if (drv->audClnt != NULL)
@@ -486,10 +488,13 @@ uint8_t lwaodWASAPI_Pause(void* drvObj)
 	HRESULT retVal;
 	
 	if (drv->devState != 1)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	retVal = drv->audClnt->Stop();
-	return (retVal == S_OK || retVal == S_FALSE) ? LWAO_ERR_OK : 0xFF;
+	if (! (retVal == S_OK || retVal == S_FALSE))
+		return LWAO_ERR_API_ERR;
+	
+	return LWAO_ERR_OK;
 }
 
 uint8_t lwaodWASAPI_Resume(void* drvObj)
@@ -498,10 +503,13 @@ uint8_t lwaodWASAPI_Resume(void* drvObj)
 	HRESULT retVal;
 	
 	if (drv->devState != 1)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	retVal = drv->audClnt->Start();
-	return (retVal == S_OK || retVal == S_FALSE) ? LWAO_ERR_OK : 0xFF;
+	if (! (retVal == S_OK || retVal == S_FALSE))
+		return LWAO_ERR_API_ERR;
+	
+	return LWAO_ERR_OK;
 }
 
 
@@ -564,7 +572,7 @@ uint8_t lwaodWASAPI_WriteData(void* drvObj, uint32_t dataSize, void* data)
 	
 	retVal = drv->rendClnt->GetBuffer(dataSmpls, &bufData);
 	if (retVal != S_OK)
-		return LWAO_ERR_API_ERR;
+		return LWAO_ERR_WRITE_ERROR;
 	
 	memcpy(bufData, data, dataSize);
 	

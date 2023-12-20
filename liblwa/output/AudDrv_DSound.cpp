@@ -298,7 +298,7 @@ uint8_t lwaodDSound_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 #endif
 	
 	if (drv->devState != 0)
-		return 0xD0;	// already running
+		return LWAO_ERR_IS_RUNNING;
 	if (deviceID >= devLstCount)
 		return LWAO_ERR_INVALID_DEV;
 	if (drv->hWnd == NULL)
@@ -331,7 +331,7 @@ uint8_t lwaodDSound_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 		devGUID = &devList[deviceID].devGUID;
 	retVal = DirectSoundCreate(devGUID, &drv->dSndIntf, NULL);
 	if (retVal != DS_OK)
-		return LWAO_ERR_API_ERR;
+		return LWAO_ERR_DEV_OPEN_FAIL;
 	
 	retVal = drv->dSndIntf->SetCooperativeLevel(drv->hWnd, DSSCL_PRIORITY);
 	if (retVal == DSERR_INVALIDPARAM)
@@ -352,7 +352,7 @@ uint8_t lwaodDSound_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, v
 	lwauSignal_Reset(drv->hSignal);
 	retVal8 = lwauThread_Init(&drv->hThread, &DirectSoundThread, drv);
 	if (retVal8)
-		return 0xC8;	// CreateThread failed
+		return LWAO_ERR_THREAD_FAIL;
 #ifdef NDEBUG
 	hWinThr = *(HANDLE*)lwauThread_GetHandle(drv->hThread);
 	retValB = SetThreadPriority(hWinThr, THREAD_PRIORITY_TIME_CRITICAL);
@@ -381,7 +381,7 @@ uint8_t lwaodDSound_Stop(void* drvObj)
 	DRV_DSND* drv = (DRV_DSND*)drvObj;
 	
 	if (drv->devState != 1)
-		return 0xD8;	// is already stopped (or stopping)
+		return LWAO_ERR_NOT_RUNNING;
 	
 	drv->devState = 2;
 	
@@ -413,10 +413,13 @@ uint8_t lwaodDSound_Pause(void* drvObj)
 	HRESULT retVal;
 	
 	if (drv->devState != 1)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	retVal = drv->dSndBuf->Stop();
-	return (retVal == DS_OK) ? LWAO_ERR_OK : 0xFF;
+	if (retVal != DS_OK)
+		return LWAO_ERR_API_ERR;
+	
+	return LWAO_ERR_OK;
 }
 
 uint8_t lwaodDSound_Resume(void* drvObj)
@@ -425,10 +428,13 @@ uint8_t lwaodDSound_Resume(void* drvObj)
 	HRESULT retVal;
 	
 	if (drv->devState != 1)
-		return 0xFF;
+		return LWAO_ERR_NOT_RUNNING;
 	
 	retVal = drv->dSndBuf->Play(0, 0, DSBPLAY_LOOPING);
-	return (retVal == DS_OK) ? LWAO_ERR_OK : 0xFF;
+	if (retVal != DS_OK)
+		return LWAO_ERR_API_ERR;
+	
+	return LWAO_ERR_OK;
 }
 
 
@@ -560,7 +566,7 @@ static uint8_t WriteBuffer(DRV_DSND* drv, uint32_t dataSize, void* data)
 	retVal = drv->dSndBuf->Lock(drv->writePos, dataSize, &bufPtr1, &bufSize1,
 								&bufPtr2, &bufSize2, 0x00);
 	if (retVal != DS_OK)
-		return 0xFF;
+		return LWAO_ERR_API_ERR;
 	
 	memcpy(bufPtr1, data, bufSize1);
 	drv->writePos += bufSize1;
@@ -574,7 +580,7 @@ static uint8_t WriteBuffer(DRV_DSND* drv, uint32_t dataSize, void* data)
 	
 	retVal = drv->dSndBuf->Unlock(bufPtr1, bufSize1, bufPtr2, bufSize2);
 	if (retVal != DS_OK)
-		return 0xFF;
+		return LWAO_ERR_API_ERR;
 	
 	return LWAO_ERR_OK;
 }
@@ -588,13 +594,13 @@ static uint8_t ClearBuffer(DRV_DSND* drv)
 	retVal = drv->dSndBuf->Lock(0x00, 0x00, &bufPtr, &bufSize,
 								NULL, NULL, DSBLOCK_ENTIREBUFFER);
 	if (retVal != DS_OK)
-		return 0xFF;
+		return LWAO_ERR_API_ERR;
 	
 	memset(bufPtr, 0x00, bufSize);
 	
 	retVal = drv->dSndBuf->Unlock(bufPtr, bufSize, NULL, 0);
 	if (retVal != DS_OK)
-		return 0xFF;
+		return LWAO_ERR_API_ERR;
 	
 	return LWAO_ERR_OK;
 }
