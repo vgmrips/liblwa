@@ -248,8 +248,13 @@ uint8_t lwaodALSA_Start(void* drvObj, uint32_t deviceID, LWAO_OPTS* options, voi
 		sndPcmFmt = SND_PCM_FORMAT_U8;
 	else if (drv->waveFmt.wBitsPerSample == 16)
 		sndPcmFmt = SND_PCM_FORMAT_S16;
+#if defined(LWA_LITTLE_ENDIAN)
 	else if (drv->waveFmt.wBitsPerSample == 24)
-		sndPcmFmt = SND_PCM_FORMAT_S24;
+		sndPcmFmt = SND_PCM_FORMAT_S24_3LE;
+#elif defined(LWA_BIG_ENDIAN)
+	else if (drv->waveFmt.wBitsPerSample == 24)
+		sndPcmFmt = SND_PCM_FORMAT_S24_3BE;
+#endif
 	else if (drv->waveFmt.wBitsPerSample == 32)
 		sndPcmFmt = SND_PCM_FORMAT_S32;
 	else
