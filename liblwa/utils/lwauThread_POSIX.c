@@ -95,7 +95,7 @@ uint64_t LWA_API lwauThread_GetID(const LWAU_THREAD* thr)
 #elif defined (__HAIKU__)
 	return get_pthread_thread_id (thr->id);
 #else
-	return thr->id;
+	return (uint64_t)thr->id;
 #endif
 }
 
